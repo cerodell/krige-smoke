@@ -11,6 +11,7 @@ __pycache__/
 data/
 img/
 .DS_Store
+*.sqlite
 
 # Distribution / packaging
 .Python
