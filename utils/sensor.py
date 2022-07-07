@@ -5,12 +5,12 @@ PurpleAir Sensor Client
 
 import json
 import os
-from re import sub
-from typing import Optional, List
 from datetime import timedelta
+from re import sub
+from typing import List, Optional
 
-from requests_cache import CachedSession
 from geopy.geocoders import Nominatim
+from requests_cache import CachedSession
 
 from .api_data import API_ROOT
 from .channel import Channel
@@ -50,6 +50,14 @@ class Sensor:
         self.location: str = ""
         if self.parse_location:
             self.get_location()
+
+    @property
+    def created_date(self):
+        """Gets the date the sensor's first known active date
+
+        Does so by getting the parent channel's `created_date` from thingspeak
+        """
+        return self.parent.created_date
 
     # pylint: disable=no-self-use
     def get_data(self, identifier: int) -> Optional[list]:

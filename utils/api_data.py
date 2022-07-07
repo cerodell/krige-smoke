@@ -3,7 +3,10 @@ Constants for PurpleAir API
 """
 
 
-API_ROOT = "https://www.purpleair.com/json"
+# API_ROOT = 'https://www.purpleair.com/json'
+API_ROOT = "https://www.purpleair.com/temp.json"
+
+THINGSPEAK_API_URL = "https://thingspeak.com/channels/{channel}/feed.{dataformat}?"
 
 PARENT_PRIMARY_COLS = {
     "created_at": "created_at",

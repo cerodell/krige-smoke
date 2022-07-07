@@ -14,7 +14,7 @@ this_dir = path.parent  # this folder
 notebooks_dir = this_dir
 root_dir = notebooks_dir.parents[0]
 data_dir = root_dir / Path("data")
-save_dir = root_dir / Path("img")
+img_dir = root_dir / Path("img")
 
 
 sys.path.insert(0, str(root_dir))

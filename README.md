@@ -14,7 +14,7 @@
 - A Gaussian process is a probability distribution over possible functions that fit a set of points.
 
 #### When:
-- 1960.
+- 1960
 
 #### Where:
 - France.
@@ -36,3 +36,10 @@
 - Test varied methods of kriging
 - Try with Basic Methods and expand to Kriging Parameters Tuning, Regression Kriging,
   - I think these are hyperparameters but need to learn more on this.
+
+
+### Notes
+
+- external_drift in universal kriging can be the explanatory variables?? something like a dem model, temp or the hms on the same grid etc being predicted by the krig algorithm
+
+- Let’s try nearest neighbour interpolation now using scipy.interpolate.NearestNDInterpolator. As angular coordinates (lat/lon) are not good for measuring distances, I’m going to first convert my data to the linear, meter-based Lambert projection recommend by Statistics Canada and extract the x and y locations as columns in my GeoDataFrame (“Easting” and “Northing” respectively):

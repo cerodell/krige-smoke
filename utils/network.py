@@ -5,9 +5,9 @@ PurpleAir API Client Class
 
 import json
 import time
+from datetime import timedelta
 from json.decoder import JSONDecodeError
 from typing import List, Optional, Union
-from datetime import timedelta
 
 import pandas as pd
 from requests_cache import CachedSession
@@ -38,6 +38,7 @@ class SensorList:
         response = session.get(f'{API_ROOT}?q=""')
         try:
             data = json.loads(response.content)
+
         except JSONDecodeError as err:
             raise ValueError("Invalid JSON data returned from network!") from err
 
