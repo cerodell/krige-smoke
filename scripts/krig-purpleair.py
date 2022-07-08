@@ -4,6 +4,7 @@ import pandas as pd
 import xarray as xr
 
 # import osmnx as ox
+from skgstat import Variogram
 
 import geopandas as gpd
 import plotly.express as px
@@ -12,10 +13,6 @@ from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 from shapely.geometry import Polygon
 import shapely
-
-print(shapely.__version__)
-
-# conda install shapely=1.8.2
 
 import matplotlib.pyplot as plt
 from utils.utils import pixel2poly
@@ -28,10 +25,6 @@ from context import data_dir, img_dir
 
 wesn = [-122.2, -105.5, 49.0, 56.5]  ## Test Domain
 resolution = 10_000  # cell size in meters
-
-# grid_space = .1
-# grid_lon = np.arange(wesn[0],wesn[1]+grid_space, grid_space)
-# grid_lat = np.arange(wesn[2],wesn[3]+grid_space, grid_space)
 
 
 gov_ds = xr.open_dataset(str(data_dir) + f"/gov_aq.nc")
@@ -113,18 +106,73 @@ gpm25.head()
 
 gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
 gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
-krig = OrdinaryKriging(
-    x=gpm25["Easting"],
-    y=gpm25["Northing"],
-    z=gpm25["PM2.5"],
-    variogram_model="spherical",
-    enable_plotting=True,
-    verbose=True,
+for i in range(1, 30):
+    krig = OrdinaryKriging(
+        x=gpm25["Easting"],
+        y=gpm25["Northing"],
+        z=gpm25["PM2.5"],
+        variogram_model="spherical",
+        # enable_plotting=True,
+        enable_statistics=True,
+        # verbose=True,
+        nlags=i,
+    )
+    print(f"nlags of {i}")
+    print("Q1 =", krig.Q1)
+    print("Q2 =", krig.Q2)
+    print("cR =", krig.cR, "\n")
+    print("------------------------")
+
+# # warnings.filterwarnings("ignore")  # Silence some warnings
+# vario = Variogram(coordinates=gpm25[["Easting", "Northing"]],
+#                   values=gpm25["PM2.5"],
+#                   n_lags=20,
+#                   use_nugget = True
+#                   )
+# vario.distance_difference_plot()
+# vario.plot(hist=False)
+# vario.describe()["effective_range"]
+# vario.describe()["nugget"]
+
+z, ss = krig.execute("grid", gridx, gridy)
+OK_pm25 = np.where(z < 0, 0, z)
+
+# %%
+fig = plt.figure(figsize=(8, 4))
+ax = fig.add_subplot(111)
+ax.plot(krig.lags, krig.semivariance, "go")
+ax.plot(
+    krig.lags,
+    krig.variogram_function(krig.variogram_model_parameters, krig.lags),
+    "k-",
 )
+ax.grid(True, linestyle="--", zorder=1, lw=0.5)
+fig_title = "Coordinates type: '%s'" % krig.coordinates_type + "\n"
+if krig.variogram_model == "linear":
+    fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
+    fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"
+    fig_title += f"Nugget: {krig.variogram_model_parameters[1]}"
+elif krig.variogram_model == "power":
+    fig_title += "Using '%s' Variogram Model" % "power" + "\n"
+    fig_title += f"Scale:  {krig.variogram_model_parameters[0]}" + "\n"
+    fig_title += f"Exponent: + {krig.variogram_model_parameters[1]}" + "\n"
+    fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
+elif krig.variogram_model == "custom":
+    print("Using Custom Variogram Model")
+else:
+    fig_title += "Using '%s' Variogram Model" % krig.variogram_model + "\n"
+    fig_title += f"Partial Sill: {krig.variogram_model_parameters[0]}" + "\n"
+    fig_title += (
+        f"Full Sill: {krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2]}"
+        + "\n"
+    )
+    fig_title += f"Range: {krig.variogram_model_parameters[1]}" + "\n"
+    fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
+ax.set_title(fig_title, loc="left", fontsize=14)
+ax.set_xlabel("Lag", fontsize=12)
+ax.set_ylabel("Semivariance", fontsize=12)
+ax.tick_params(axis="both", which="major", labelsize=12)
 
-
-# z, ss = krig.execute("grid", gridx, gridy)
-# OK_pm25 = np.where(z<0, 0, z)
 
 # polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)
 
