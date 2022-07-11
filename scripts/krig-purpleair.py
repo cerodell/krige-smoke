@@ -117,7 +117,7 @@ for i in range(1, 30):
         x=gpm25["Easting"],
         y=gpm25["Northing"],
         z=gpm25["PM2.5"],
-        variogram_model="spherical",
+        variogram_model="gaussian",
         # enable_plotting=True,
         enable_statistics=True,
         # verbose=True,
@@ -137,7 +137,7 @@ for i in range(1, 30):
         "k-",
     )
     ax.grid(True, linestyle="--", zorder=1, lw=0.5)
-    fig_title = "Coordinates type: '%s'" % krig.coordinates_type + "\n"
+    fig_title = f"Coordinates type: {(krig.coordinates_type).title()}" + "\n"
     if krig.variogram_model == "linear":
         fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
         fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"
@@ -150,25 +150,34 @@ for i in range(1, 30):
     elif krig.variogram_model == "custom":
         print("Using Custom Variogram Model")
     else:
-        fig_title += "Using '%s' Variogram Model" % krig.variogram_model + "\n"
-        fig_title += f"Partial Sill: {krig.variogram_model_parameters[0]}" + "\n"
+        fig_title += f"Using {(krig.variogram_model).title()} Variogram Model" + "\n"
         fig_title += (
-            f"Full Sill: {krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2]}"
+            f"Partial Sill: {np.round(krig.variogram_model_parameters[0])}" + "\n"
+        )
+        fig_title += (
+            f"Full Sill: {np.round(krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2])}"
             + "\n"
         )
-        fig_title += f"Range: {krig.variogram_model_parameters[1]}" + "\n"
-        fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
+        fig_title += f"Range: {np.round(krig.variogram_model_parameters[1])}" + "\n"
+        fig_title += f"Nugget: {np.round(krig.variogram_model_parameters[2],2)}"
     ax.set_title(fig_title, loc="left", fontsize=14)
+    fig_title2 = (
+        f"Q1 = {np.round(krig.Q1,4)}"
+        + "\n"
+        + f"Q2 = {np.round(krig.Q2,4)}"
+        + "\n"
+        + f"cR = {np.round(krig.cR,4)}"
+    )
+    ax.set_title(fig_title2, loc="right", fontsize=14)
+
     ax.set_xlabel("Lag", fontsize=12)
     ax.set_ylabel("Semivariance", fontsize=12)
     ax.tick_params(axis="both", which="major", labelsize=12)
     plt.savefig(
-        str(img_dir) + f"/ordinary-kriging-variogram-spherical{i}.png",
+        str(img_dir) + f"/ordinary-kriging-variogram-gaussian{i}.png",
         dpi=300,
         bbox_inches="tight",
     )
-    print("------------------------")
-
 
 # krig = OrdinaryKriging(
 #     x=gpm25["Easting"],
