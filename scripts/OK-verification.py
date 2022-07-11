@@ -58,23 +58,6 @@ df_pm25 = df_pm25.loc[
 ]
 
 
-fig = px.scatter_mapbox(
-    df_pm25,
-    lat="lat",
-    lon="lon",
-    color="PM2.5",
-    size="PM2.5",
-    color_continuous_scale="RdYlGn_r",
-    # hover_name="id",
-    center={"lat": 52.722, "lon": -103.915},
-    hover_data=["PM2.5"],
-    mapbox_style="carto-positron",
-    zoom=1.8,
-)
-fig.update_layout(margin=dict(l=0, r=100, t=30, b=10))
-fig.show()
-
-
 gpm25 = gpd.GeoDataFrame(
     df_pm25,
     crs="EPSG:4326",
@@ -82,124 +65,133 @@ gpm25 = gpd.GeoDataFrame(
 ).to_crs("EPSG:3347")
 gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
 gpm25.head()
-gpm25.geometry.to_file("dataframe.shp")
 
 # %%
-
-# from shapely.geometry import MultiPoint
-# import shapely.wkt
 
 gpm25_poly = gpd.read_file(str(data_dir) + "/obs/outer_bounds")
 gpm25_poly_buff = gpm25_poly.buffer(-80_000)
 gpm25_buff = gpd.GeoDataFrame(
     {"geometry": gpd.GeoSeries(gpm25_poly_buff)}, crs=gpm25.crs
 )
-
-# test = MultiPoint(gpm25.geometry.values)
-# test_poly = shapely.wkt.loads(test.convex_hull.wkt)
-
-
-# gpm25_poly = gpd.GeoDataFrame({'geometry': gpd.GeoSeries(test_poly)}, crs=gpm25.crs, geometry='geometry')
-
-# gpm25_poly = gpd.GeoDataFrame({'geometry': gpd.GeoSeries(gpm25.geometry.unary_union.convex_hull)}, crs=gpm25.crs)
-# gpm25_poly_buff = gpm25_poly.buffer(-100_000)
-gpm25_buff = gpd.GeoDataFrame(
-    {"geometry": gpd.GeoSeries(gpm25_poly_buff)}, crs=gpm25.crs
-)
-
 gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
-
-len(gpm25_verif)
-random_sample = gpm25_verif.sample(frac=0.10)
-
-gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
 
 
 # %%
 
 
-# gridx = np.arange(gpm25_krig.bounds.minx.min(), gpm25_krig.bounds.maxx.max(), resolution)
-# gridy = np.arange(gpm25_krig.bounds.miny.min(), gpm25_krig.bounds.maxy.max(), resolution)
+nlags = 16
+gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
+gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
 
-i = 16
-krig = OrdinaryKriging(
-    x=gpm25_krig["Easting"],
-    y=gpm25_krig["Northing"],
-    z=gpm25_krig["PM2.5"],
-    variogram_model="gaussian",
-    # enable_plotting=True,
-    enable_statistics=True,
-    # verbose=True,
-    nlags=i,
-)
+list_ds = []
 
-fig = plt.figure(figsize=(8, 4))
-ax = fig.add_subplot(111)
-ax.plot(krig.lags, krig.semivariance, "go")
-ax.plot(
-    krig.lags,
-    krig.variogram_function(krig.variogram_model_parameters, krig.lags),
-    "k-",
-)
-ax.grid(True, linestyle="--", zorder=1, lw=0.5)
-fig_title = "Coordinates type: '%s'" % krig.coordinates_type + "\n"
-if krig.variogram_model == "linear":
-    fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
-    fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"
-    fig_title += f"Nugget: {krig.variogram_model_parameters[1]}"
-elif krig.variogram_model == "power":
-    fig_title += "Using '%s' Variogram Model" % "power" + "\n"
-    fig_title += f"Scale:  {krig.variogram_model_parameters[0]}" + "\n"
-    fig_title += f"Exponent: + {krig.variogram_model_parameters[1]}" + "\n"
-    fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
-elif krig.variogram_model == "custom":
-    print("Using Custom Variogram Model")
-else:
-    fig_title += "Using '%s' Variogram Model" % krig.variogram_model + "\n"
-    fig_title += f"Partial Sill: {krig.variogram_model_parameters[0]}" + "\n"
-    fig_title += (
-        f"Full Sill: {krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2]}"
-        + "\n"
+for i in range(0, 20):
+    print(i)
+    random_sample = gpm25_verif.sample(frac=0.10)
+    gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
+
+    krig = OrdinaryKriging(
+        x=gpm25_krig["Easting"],
+        y=gpm25_krig["Northing"],
+        z=gpm25_krig["PM2.5"],
+        variogram_model="gaussian",
+        enable_statistics=True,
+        nlags=nlags,
     )
-    fig_title += f"Range: {krig.variogram_model_parameters[1]}" + "\n"
-    fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
-ax.set_title(fig_title, loc="left", fontsize=14)
-ax.set_xlabel("Lag", fontsize=12)
-ax.set_ylabel("Semivariance", fontsize=12)
-ax.tick_params(axis="both", which="major", labelsize=12)
-plt.savefig(
-    str(img_dir) + f"/ordinary-kriging-variogram-gaussian{i}.png",
-    dpi=300,
-    bbox_inches="tight",
+
+    fig = plt.figure(figsize=(8, 4))
+    ax = fig.add_subplot(111)
+    ax.plot(krig.lags, krig.semivariance, "go")
+    ax.plot(
+        krig.lags,
+        krig.variogram_function(krig.variogram_model_parameters, krig.lags),
+        "k-",
+    )
+    ax.grid(True, linestyle="--", zorder=1, lw=0.5)
+    fig_title = f"Coordinates type: {(krig.coordinates_type).title()}" + "\n"
+    if krig.variogram_model == "linear":
+        fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
+        fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"
+        fig_title += f"Nugget: {krig.variogram_model_parameters[1]}"
+    elif krig.variogram_model == "power":
+        fig_title += "Using '%s' Variogram Model" % "power" + "\n"
+        fig_title += f"Scale:  {krig.variogram_model_parameters[0]}" + "\n"
+        fig_title += f"Exponent: + {krig.variogram_model_parameters[1]}" + "\n"
+        fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
+    elif krig.variogram_model == "custom":
+        print("Using Custom Variogram Model")
+    else:
+        fig_title += f"Using {(krig.variogram_model).title()} Variogram Model" + "\n"
+        fig_title += (
+            f"Partial Sill: {np.round(krig.variogram_model_parameters[0])}" + "\n"
+        )
+        fig_title += (
+            f"Full Sill: {np.round(krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2])}"
+            + "\n"
+        )
+        fig_title += f"Range: {np.round(krig.variogram_model_parameters[1])}" + "\n"
+        fig_title += f"Nugget: {np.round(krig.variogram_model_parameters[2],2)}"
+    ax.set_title(fig_title, loc="left", fontsize=14)
+    fig_title2 = (
+        f"Q1 = {np.round(krig.Q1,4)}"
+        + "\n"
+        + f"Q2 = {np.round(krig.Q2,4)}"
+        + "\n"
+        + f"cR = {np.round(krig.cR,4)}"
+    )
+    ax.set_title(fig_title2, loc="right", fontsize=14)
+
+    ax.set_xlabel("Lag", fontsize=12)
+    ax.set_ylabel("Semivariance", fontsize=12)
+    ax.tick_params(axis="both", which="major", labelsize=12)
+    plt.savefig(
+        str(img_dir) + f"/ordinary-kriging-variogram-gaussian{nlags}.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.close()
+    print("------------------------")
+
+    z, ss = krig.execute("grid", gridx, gridy)
+    OK_pm25 = np.where(z < 0, 0, z)
+    gridxx, gridyy = np.meshgrid(gridx, gridy)
+
+    ds = xr.Dataset(
+        data_vars={
+            "OK_pm25": (["x", "y"], OK_pm25.astype("float32")),
+            "random_sample": ("ids", random_sample.id.values.astype(str)),
+        },
+        coords={
+            "gridx": (["x", "y"], gridxx),
+            "gridy": (["x", "y"], gridyy),
+            "test": i,
+            "ids": np.arange(len(random_sample.id.values)),
+        },
+        attrs=dict(description=krig.variogram_model.title()),
+    )
+    list_ds.append(ds)
+
+
+final_ds = xr.concat(list_ds, dim="test")
+final_ds["random_sample"] = final_ds["random_sample"].astype(str)
+
+
+def compressor(ds):
+    """
+    this function compresses datasets
+    """
+    comp = dict(zlib=True, complevel=9)
+    encoding = {var: comp for var in ds.data_vars}
+    return ds, encoding
+
+
+ds_concat, encoding = compressor(final_ds)
+final_ds.to_netcdf(
+    str(data_dir) + f"/{krig.variogram_model.title()}-{nlags}.nc",
+    encoding=encoding,
+    mode="w",
 )
-print("------------------------")
-# print(f"nlags of {6}")
-print("Q1 =", krig.Q1)
-print("Q2 =", krig.Q2)
-print("cR =", krig.cR, "\n")
 
-# print("------------------------")
-
-
-# z, ss = krig.execute("grid", gridx, gridy)
-# OK_pm25 = np.where(z < 0, 0, z)
-
-
-# print(krig.variogram_model_parameters[1]/1000)
-
-# polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)
-
-# pm25_model = (gpd.GeoDataFrame({"PM_25_modelled": values}, geometry=polygons, crs="EPSG:3347")
-#                  .to_crs("EPSG:4326")
-#                  )
-
-# # fig = px.choropleth_mapbox(pm25_model, geojson=pm25_model.geometry, locations=pm25_model.index,
-# #                            color="PM_25_modelled", color_continuous_scale="RdYlGn_r",
-# #                            center={"lat": 52.261, "lon": -123.246}, zoom=3.5,
-# #                            mapbox_style="carto-positron")
-# # fig.update_layout(margin=dict(l=0, r=0, t=30, b=10))
-# # fig.update_traces(marker_line_width=0)
-# # fig.show()
 
 # world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 # na = world.query('continent == "North America"')
