@@ -24,9 +24,12 @@ import time
 start_time = time.time()
 
 # %%
-# wesn = [-160.0,-52.0,32.,70.0] ## BSC Domain
+
+nlags = 15
+variogram_model = "spherical"
+frac = 0.50
+
 wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
-# wesn = [-122.2, -105.5, 49.0, 56.5]  ## Test Domain
 resolution = 10_000  # cell size in meters
 
 gov_ds = xr.open_dataset(str(data_dir) + f"/gov_aq.nc")
@@ -65,6 +68,7 @@ gpm25 = gpd.GeoDataFrame(
 ).to_crs("EPSG:3347")
 gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
 gpm25.head()
+gpm25.to_csv(str(data_dir) + "/obs/gpm25.csv")
 
 # %%
 
@@ -79,7 +83,6 @@ gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
 # %%
 
 
-nlags = 16
 gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
 gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
 
@@ -87,14 +90,14 @@ list_ds = []
 
 for i in range(0, 20):
     print(i)
-    random_sample = gpm25_verif.sample(frac=0.10)
+    random_sample = gpm25_verif.sample(frac=frac)
     gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
 
     krig = OrdinaryKriging(
         x=gpm25_krig["Easting"],
         y=gpm25_krig["Northing"],
         z=gpm25_krig["PM2.5"],
-        variogram_model="gaussian",
+        variogram_model=variogram_model,
         enable_statistics=True,
         nlags=nlags,
     )
@@ -145,7 +148,8 @@ for i in range(0, 20):
     ax.set_ylabel("Semivariance", fontsize=12)
     ax.tick_params(axis="both", which="major", labelsize=12)
     plt.savefig(
-        str(img_dir) + f"/ordinary-kriging-variogram-gaussian{nlags}.png",
+        str(img_dir)
+        + f"/ordinary-kriging-variogram-{krig.variogram_model}-{nlags}-{int(frac*100)}.png",
         dpi=300,
         bbox_inches="tight",
     )
@@ -187,7 +191,7 @@ def compressor(ds):
 
 ds_concat, encoding = compressor(final_ds)
 final_ds.to_netcdf(
-    str(data_dir) + f"/{krig.variogram_model.title()}-{nlags}.nc",
+    str(data_dir) + f"/{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
     encoding=encoding,
     mode="w",
 )
