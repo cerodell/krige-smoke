@@ -1,4 +1,4 @@
-# Explore Kriging
+# Background
 ## Comprehensive exam question
 ### Dr. Phil Austin
 #### Christopher Rodell
@@ -26,13 +26,12 @@
 
 ## Methods
 ### [Purple Air](https://www2.purpleair.com/)
-- "Laser pollution sensors by PurpleAir use laser particle counters that provide an accurate and low-cost way to measure smoke, dust, and other particulate air pollution. Laser air quality sensors with both internal storage and data-transmitting abilities."
-- Use purple air data during wildfire smoke events.
--
+- "PurpleAir is a newtwork of low coast air aqulaity monotiors.
+- Use measure Particaul Matter 2.5 data form the PurpleAir netwrok during wildfire smoke events on July 16th 2021.
+- Apply Kriging to interpolate ground-level smoke concentrations spatially across western norther america.
 
-- Apply Kriging to interpolate ground-level smoke concentrations spatially.
 ### [PyKrige](https://geostat-framework.readthedocs.io/projects/pykrige/en/stable/index.html)
-- "The code supports 2D and 3D ordinary and universal kriging. Standard variogram models (linear, power, spherical, gaussian, exponential) are built in, but custom variogram models can also be used."
+- The code supports 2D and 3D ordinary and universal kriging. Standard variogram models (linear, power, spherical, gaussian, exponential) are built in, but custom variogram models can also be used.
 - Test varied methods of kriging
-- Try with Basic Methods and expand to Kriging Parameters Tuning, Regression Kriging,
-  - I think these are hyperparameters but need to learn more on this.
+- Try with Basic Methods and expand to Kriging Parameters Tuning, Universal Kriging (ie Regression Kriging)
+    - For Universal Kriging convaritate such as surface pressure, 10 meter wind speed and direction and digtial evelation models will be tested.
