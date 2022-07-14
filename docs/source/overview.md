@@ -25,8 +25,13 @@
 <hr />
 
 ## Methods
+Use observational data from a netwrok of low cost ari quality montiors to spaitaly interoplate PM 2.5 conctrations.
+
+
+
+
 ### [Purple Air](https://www2.purpleair.com/)
-- "PurpleAir is a newtwork of low coast air aqulaity monotiors.
+- PurpleAir is a newtwork of low coast air aqulaity monotiors.
 - Use measure Particaul Matter 2.5 data form the PurpleAir netwrok during wildfire smoke events on July 16th 2021.
 - Apply Kriging to interpolate ground-level smoke concentrations spatially across western norther america.
 

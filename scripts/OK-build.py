@@ -2,9 +2,9 @@ import context
 import numpy as np
 import pandas as pd
 import xarray as xr
+import salem
+from datetime import datetime
 
-# import osmnx as ox
-# from skgstat import Variogram
 
 import geopandas as gpd
 import plotly.express as px
@@ -27,7 +27,7 @@ start_time = time.time()
 
 nlags = 15
 variogram_model = "spherical"
-frac = 0.50
+frac = 0.10
 
 wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
 resolution = 10_000  # cell size in meters
@@ -86,10 +86,22 @@ gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
 gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
 gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
 
+
+grid_ds = salem.Grid(
+    nxny=(len(gridx), len(gridy)),
+    dxdy=(resolution, resolution),
+    x0y0=(gpm25.bounds.minx.min(), gpm25.bounds.miny.min()),
+    proj="epsg:3347",
+    pixel_ref="corner",
+).to_dataset()
+
 list_ds = []
 
 for i in range(0, 20):
+    loopTime = datetime.now()
+
     print(i)
+    ds = grid_ds
     random_sample = gpm25_verif.sample(frac=frac)
     gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
 
@@ -101,78 +113,83 @@ for i in range(0, 20):
         enable_statistics=True,
         nlags=nlags,
     )
-
-    fig = plt.figure(figsize=(8, 4))
-    ax = fig.add_subplot(111)
-    ax.plot(krig.lags, krig.semivariance, "go")
-    ax.plot(
-        krig.lags,
-        krig.variogram_function(krig.variogram_model_parameters, krig.lags),
-        "k-",
-    )
-    ax.grid(True, linestyle="--", zorder=1, lw=0.5)
-    fig_title = f"Coordinates type: {(krig.coordinates_type).title()}" + "\n"
-    if krig.variogram_model == "linear":
-        fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
-        fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"
-        fig_title += f"Nugget: {krig.variogram_model_parameters[1]}"
-    elif krig.variogram_model == "power":
-        fig_title += "Using '%s' Variogram Model" % "power" + "\n"
-        fig_title += f"Scale:  {krig.variogram_model_parameters[0]}" + "\n"
-        fig_title += f"Exponent: + {krig.variogram_model_parameters[1]}" + "\n"
-        fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
-    elif krig.variogram_model == "custom":
-        print("Using Custom Variogram Model")
-    else:
-        fig_title += f"Using {(krig.variogram_model).title()} Variogram Model" + "\n"
-        fig_title += (
-            f"Partial Sill: {np.round(krig.variogram_model_parameters[0])}" + "\n"
-        )
-        fig_title += (
-            f"Full Sill: {np.round(krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2])}"
-            + "\n"
-        )
-        fig_title += f"Range: {np.round(krig.variogram_model_parameters[1])}" + "\n"
-        fig_title += f"Nugget: {np.round(krig.variogram_model_parameters[2],2)}"
-    ax.set_title(fig_title, loc="left", fontsize=14)
-    fig_title2 = (
-        f"Q1 = {np.round(krig.Q1,4)}"
-        + "\n"
-        + f"Q2 = {np.round(krig.Q2,4)}"
-        + "\n"
-        + f"cR = {np.round(krig.cR,4)}"
-    )
-    ax.set_title(fig_title2, loc="right", fontsize=14)
-
-    ax.set_xlabel("Lag", fontsize=12)
-    ax.set_ylabel("Semivariance", fontsize=12)
-    ax.tick_params(axis="both", which="major", labelsize=12)
-    plt.savefig(
-        str(img_dir)
-        + f"/ordinary-kriging-variogram-{krig.variogram_model}-{nlags}-{int(frac*100)}.png",
-        dpi=300,
-        bbox_inches="tight",
-    )
-    plt.close()
-    print("------------------------")
-
     z, ss = krig.execute("grid", gridx, gridy)
     OK_pm25 = np.where(z < 0, 0, z)
-    gridxx, gridyy = np.meshgrid(gridx, gridy)
 
-    ds = xr.Dataset(
-        data_vars={
-            "OK_pm25": (["x", "y"], OK_pm25.astype("float32")),
-            "random_sample": ("ids", random_sample.id.values.astype(str)),
-        },
-        coords={
-            "gridx": (["x", "y"], gridxx),
-            "gridy": (["x", "y"], gridyy),
-            "test": i,
-            "ids": np.arange(len(random_sample.id.values)),
-        },
-        attrs=dict(description=krig.variogram_model.title()),
-    )
+    ds.assign_coords({"test": i})
+    ds.assign_coords({"ids": np.arange(len(random_sample.id.values))})
+    ds["pm25"] = (("y", "x"), OK_pm25)
+    ds["random_sample"] = ("ids", random_sample.id.values.astype(str))
+    # fig = plt.figure(figsize=(8, 4))
+    # ax = fig.add_subplot(111)
+    # ax.plot(krig.lags, krig.semivariance, "go")
+    # ax.plot(
+    #     krig.lags,
+    #     krig.variogram_function(krig.variogram_model_parameters, krig.lags),
+    #     "k-",
+    # )
+    # ax.grid(True, linestyle="--", zorder=1, lw=0.5)
+    # fig_title = f"Coordinates type: {(krig.coordinates_type).title()}" + "\n"
+    # if krig.variogram_model == "linear":
+    #     fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
+    #     fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"
+    #     fig_title += f"Nugget: {krig.variogram_model_parameters[1]}"
+    # elif krig.variogram_model == "power":
+    #     fig_title += "Using '%s' Variogram Model" % "power" + "\n"
+    #     fig_title += f"Scale:  {krig.variogram_model_parameters[0]}" + "\n"
+    #     fig_title += f"Exponent: + {krig.variogram_model_parameters[1]}" + "\n"
+    #     fig_title += f"Nugget: {krig.variogram_model_parameters[2]}"
+    # elif krig.variogram_model == "custom":
+    #     print("Using Custom Variogram Model")
+    # else:
+    #     fig_title += f"Using {(krig.variogram_model).title()} Variogram Model" + "\n"
+    #     fig_title += (
+    #         f"Partial Sill: {np.round(krig.variogram_model_parameters[0])}" + "\n"
+    #     )
+    #     fig_title += (
+    #         f"Full Sill: {np.round(krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2])}"
+    #         + "\n"
+    #     )
+    #     fig_title += f"Range: {np.round(krig.variogram_model_parameters[1])}" + "\n"
+    #     fig_title += f"Nugget: {np.round(krig.variogram_model_parameters[2],2)}"
+    # ax.set_title(fig_title, loc="left", fontsize=14)
+    # fig_title2 = (
+    #     f"Q1 = {np.round(krig.Q1,4)}"
+    #     + "\n"
+    #     + f"Q2 = {np.round(krig.Q2,4)}"
+    #     + "\n"
+    #     + f"cR = {np.round(krig.cR,4)}"
+    # )
+    # ax.set_title(fig_title2, loc="right", fontsize=14)
+
+    # ax.set_xlabel("Lag", fontsize=12)
+    # ax.set_ylabel("Semivariance", fontsize=12)
+    # ax.tick_params(axis="both", which="major", labelsize=12)
+    # plt.savefig(
+    #     str(img_dir)
+    #     + f"/ordinary-kriging-variogram-{krig.variogram_model}-{nlags}-{int(frac*100)}.png",
+    #     dpi=300,
+    #     bbox_inches="tight",
+    # )
+    # plt.close()
+    # print("------------------------")
+
+    # gridxx, gridyy = np.meshgrid(gridx, gridy)
+
+    # ds = xr.Dataset(
+    #     data_vars={
+    #         "OK_pm25": (["x", "y"], OK_pm25.astype("float32")),
+    #         "random_sample": ("ids", random_sample.id.values.astype(str)),
+    #     },
+    #     coords={
+    #         "gridx": (["x", "y"], gridxx),
+    #         "gridy": (["x", "y"], gridyy),
+    #         "test": i,
+    #         "ids": np.arange(len(random_sample.id.values)),
+    #     },
+    #     attrs=dict(description=krig.variogram_model.title()),
+    # )
+    print(f"Loop time {datetime.now() - loopTime}")
     list_ds.append(ds)
 
 
@@ -191,7 +208,7 @@ def compressor(ds):
 
 ds_concat, encoding = compressor(final_ds)
 final_ds.to_netcdf(
-    str(data_dir) + f"/{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
+    str(data_dir) + f"/OK-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
     encoding=encoding,
     mode="w",
 )

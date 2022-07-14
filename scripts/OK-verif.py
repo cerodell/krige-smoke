@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from sklearn.neighbors import KDTree
+from sklearn.metrics import mean_squared_error
 
 import matplotlib.pyplot as plt
 from pylab import *
@@ -24,6 +25,7 @@ OK_ds = xr.open_dataset(
     str(data_dir) + f"/{variogram_model.title()}-{nlags}-{int(frac*100)}.nc"
 )
 
+
 gridx, gridy = OK_ds.gridx.values, OK_ds.gridy.values
 shape = gridx.shape
 
@@ -41,11 +43,13 @@ for i in range(cmap.N):
     colors.append(matplotlib.colors.rgb2hex(rgba))
 
 R_2 = []
+modeled, observed = [], []
 for i in range(len(OK_ds.test)):
 
     OK = OK_ds.isel(test=i)
     OK_pm25 = OK.OK_pm25.values
     random_sample = gpm25[gpm25.id.isin(OK.random_sample.values)].copy()
+
     # print(OK.random_sample.values)
     south_north, west_east, ids = [], [], []
     for loc in random_sample.itertuples(index=True, name="Pandas"):
@@ -64,9 +68,16 @@ for i in range(len(OK_ds.test)):
 
     OK_pm25_points = OK_pm25[south_north, west_east]
     random_sample["modeled_PM2.5"] = OK_pm25_points
+    modeled.append(OK_pm25_points)
+    observed.append(random_sample["PM2.5"])
     ax.scatter(OK_pm25_points, random_sample["PM2.5"], color=colors[i])
     r = random_sample["modeled_PM2.5"].corr(random_sample["PM2.5"])
     R_2.append(r)
     print(r)
+plt.close()
 
+test = mean_squared_error(observed, modeled, squared=False)
+print(test)
+test = mean_squared_error(observed, modeled)
+print(test)
 print(f"Average R^2 {np.mean(R_2)}")
