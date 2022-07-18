@@ -2,7 +2,7 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "id": "1c43b9ee",
+   "id": "d5089a1e",
    "metadata": {},
    "source": [
     "# Kriging"
@@ -10,7 +10,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "c683e7a0",
+   "id": "812299fa",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -21,7 +21,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "a22a977f",
+   "id": "dc6d90b5",
    "metadata": {},
    "source": [
     "## Case Study.\n",
@@ -34,7 +34,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "0e35b110",
+   "id": "410ba02a",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -67,7 +67,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "ceae66bf",
+   "id": "9b65f515",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -79,7 +79,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "09043d74",
+   "id": "d5327ee7",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -87,8 +87,8 @@
    "source": [
     "## Define domain of interest... this is the same bounds as the BlueSky Canada Forecasts\n",
     "# wesn = [-160.0,-52.0,32.,70.0]\n",
-    "wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain\n",
-    "# wesn = [-122.2, -105.5, 49.0, 56.5]\n",
+    "# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain\n",
+    "wesn = [-126, -105.5, 45.0, 56.5]\n",
     "\n",
     "# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain\n",
     "\n",
@@ -129,7 +129,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "a523f70e",
+   "id": "52ad4792",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -141,7 +141,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "6114c6dd",
+   "id": "1c2483ad",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -151,7 +151,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "0acf9cc3",
+   "id": "82877295",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -162,7 +162,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "a440f1b9",
+   "id": "f0a506b7",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -185,7 +185,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "785380e5",
+   "id": "16b7416e",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -195,7 +195,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "a90512ea",
+   "id": "b8dded3e",
    "metadata": {},
    "source": [
     "### Reproject Data\n",
@@ -206,7 +206,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "640bae79",
+   "id": "fc75e7a9",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -224,7 +224,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "812e584f",
+   "id": "81a760e3",
    "metadata": {},
    "source": [
     "### Create Grid\n",
@@ -234,11 +234,11 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "29df57db",
+   "id": "dd8bd2ea",
    "metadata": {},
    "outputs": [],
    "source": [
-    "resolution = 10_000  # cell size in meters\n",
+    "resolution = 20_000  # cell size in meters\n",
     "\n",
     "gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)\n",
     "gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)\n",
@@ -257,7 +257,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "93b88bee",
+   "id": "a218dd34",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -269,7 +269,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "547babb7",
+   "id": "718df274",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -311,7 +311,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "c438b2fb",
+   "id": "134b8d37",
    "metadata": {},
    "source": [
     "### Universal Kriging"
