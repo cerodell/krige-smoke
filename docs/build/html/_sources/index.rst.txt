@@ -23,7 +23,7 @@ From esri:
    :caption: Contents:
 
    overview
-   Comps <comps.ipynb>
+   Comps <comps2.ipynb>
 
 
 
