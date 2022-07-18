@@ -23,7 +23,9 @@ From esri:
    :caption: Contents:
 
    overview
-   Comps <comps.ipynb>
+   comps
+   comps-ok
+
 
 
 

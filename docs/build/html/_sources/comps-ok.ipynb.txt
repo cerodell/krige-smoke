@@ -1,0 +1,152 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "aedb6e23",
+   "metadata": {},
+   "source": [
+    "# Ordinary Kriging"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4eeee6cd",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "outputs": [],
+   "source": [
+    "import context\n",
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import salem\n",
+    "\n",
+    "import geopandas as gpd\n",
+    "import plotly.express as px\n",
+    "\n",
+    "from pykrige.ok import OrdinaryKriging\n",
+    "\n",
+    "\n",
+    "from utils.utils import pixel2poly\n",
+    "\n",
+    "from context import data_dir, img_dir\n",
+    "import time"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "455e7c28",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv(str(data_dir)+ '/obs/gpm25.csv')\n",
+    "gpm25 = gpd.GeoDataFrame(\n",
+    "    df,\n",
+    "    crs=\"EPSG:4326\",\n",
+    "    geometry=gpd.points_from_xy(df[\"lon\"], df[\"lat\"]),\n",
+    ").to_crs(\"EPSG:3347\")\n",
+    "gpm25[\"Easting\"], gpm25[\"Northing\"] = gpm25.geometry.x, gpm25.geometry.y\n",
+    "gpm25.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f2e4ed2d",
+   "metadata": {},
+   "source": [
+    "### Create Grid\n",
+    "Here we will create a grid we want to use for the interpolate on."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c302a9d0",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "resolution = 20_000  # cell size in meters\n",
+    "\n",
+    "gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)\n",
+    "gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)\n",
+    "\n",
+    "\n",
+    "krig_ds = salem.Grid(\n",
+    "    nxny=(len(gridx), len(gridy)),\n",
+    "    dxdy=(resolution, resolution),\n",
+    "    x0y0=(gpm25.bounds.minx.min(), gpm25.bounds.miny.min()),\n",
+    "    proj=\"epsg:3347\",\n",
+    "    pixel_ref=\"corner\",\n",
+    ").to_dataset()\n",
+    "\n",
+    "krig_ds"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d8ea0ab0",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "## Krig"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6d5ca7bd",
+   "metadata": {
+    "lines_to_next_cell": 3
+   },
+   "outputs": [],
+   "source": [
+    "nlags = 15\n",
+    "variogram_model = \"spherical\"\n",
+    "\n",
+    "krig = OrdinaryKriging(\n",
+    "    x=gpm25[\"Easting\"],\n",
+    "    y=gpm25[\"Northing\"],\n",
+    "    z=gpm25[\"PM2.5\"],\n",
+    "    variogram_model=variogram_model,\n",
+    "    nlags=nlags,\n",
+    ")\n",
+    "z, ss = krig.execute(\"grid\", gridx, gridy)\n",
+    "OK_pm25 = np.where(z < 0, 0, z)\n",
+    "\n",
+    "# krig_ds[\"OK_pm25\"] = ((\"y\", \"x\"), OK_pm25)\n",
+    "\n",
+    "polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)\n",
+    "pm25_model = gpd.GeoDataFrame(\n",
+    "    {\"PM_25_modelled\": values}, geometry=polygons, crs=\"EPSG:3347\"\n",
+    ").to_crs(\"EPSG:4326\")\n",
+    "\n",
+    "fig = px.choropleth_mapbox(\n",
+    "    pm25_model,\n",
+    "    geojson=pm25_model.geometry,\n",
+    "    locations=pm25_model.index,\n",
+    "    color=\"PM_25_modelled\",\n",
+    "    color_continuous_scale=\"RdYlGn_r\",\n",
+    "    center={\"lat\": 49.5, \"lon\": -107.},\n",
+    "    zoom=2.5,\n",
+    "    mapbox_style=\"carto-positron\",\n",
+    ")\n",
+    "fig.update_layout(margin=dict(l=0, r=0, t=30, b=10))\n",
+    "fig.update_traces(marker_line_width=0)"
+   ]
+  }
+ ],
+ "metadata": {
+  "jupytext": {
+   "cell_metadata_filter": "-all",
+   "main_language": "python",
+   "notebook_metadata_filter": "-all"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
