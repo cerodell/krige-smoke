@@ -40,7 +40,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_automodapi.automodapi",
     "recommonmark",
-    "sphinx_markdown_tables",
+    # "sphinx_markdown_tables",
     "nbsphinx",
     "sphinx.ext.mathjax",
 ]
