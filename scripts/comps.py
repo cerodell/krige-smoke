@@ -43,8 +43,8 @@ dot = "2021-07-16T22:00:00"
 # %%
 ## Define domain of interest... this is the same bounds as the BlueSky Canada Forecasts
 # wesn = [-160.0,-52.0,32.,70.0]
-# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
-wesn = [-122.2, -105.5, 49.0, 56.5]
+wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
+# wesn = [-122.2, -105.5, 49.0, 56.5]
 
 # wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
 
