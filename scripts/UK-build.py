@@ -6,10 +6,6 @@ import salem
 from datetime import datetime
 
 
-# %% [markdown]
-# # Test
-# %%
-
 import geopandas as gpd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -34,9 +30,12 @@ variogram_model = "spherical"
 frac = 0.1
 
 wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
-resolution = 10_000  # cell size in meters
+resolution = 10000  # cell size in meters
 
 era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
+
+dem_ds = salem.open_xr_dataset(str(data_dir) + f"/elev.americas.5-min.nc")
+dem_ds["lon"] = dem_ds["lon"] - 360
 
 gov_ds = xr.open_dataset(str(data_dir) + f"/gov_aq.nc")
 gov_ds = gov_ds.sel(datetime="2021-07-16T22:00:00")
@@ -96,42 +95,47 @@ grid_ds = salem.Grid(
     pixel_ref="corner",
 ).to_dataset()
 
-era_ds = grid_ds.salem.transform(era_ds)
-Angle = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
+# era_ds = grid_ds.salem.transform(era_ds)
+dem = grid_ds.salem.transform(dem_ds)
+dem["data"] = xr.where(dem.data < 0, 0, dem.data)
+
+# Angle = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
 
 
-list_ds = []
-for i in range(0, 20):
+list_ds, random_ids_list = [], []
+for i in range(0, 1):
     loopTime = datetime.now()
-    gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
-    print(i)
-    # print(len(gpm25_veriff))
+
     ds = grid_ds
+    gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
     random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
+    random_ids = random_sample.id.values
     gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
+    print(f"Random Sample index 0 {random_ids[0]}")
+
     krig = UniversalKriging(
         x=gpm25_krig["Easting"],
         y=gpm25_krig["Northing"],
         z=gpm25_krig["PM2.5"],
         variogram_model=variogram_model,
         nlags=nlags,
-        external_drift=Angle.values,
+        external_drift=dem.data.values,
     )
 
     z, ss = krig.execute("grid", gridx, gridy)
     OK_pm25 = np.where(z < 0, 0, z)
-    # gridxx, gridyy = np.meshgrid(gridx, gridy)
 
     ds.assign_coords({"test": i})
-    ds.assign_coords({"ids": np.arange(len(random_sample.id.values))})
+    ds.assign_coords({"ids": np.arange(len(random_ids))})
     ds["pm25"] = (("y", "x"), OK_pm25)
-    ds["random_sample"] = ("ids", random_sample.id.values.astype(str))
-    print(f"Loop time {datetime.now() - loopTime}")
+    random_ids_list.append(random_ids.astype(str))
 
     list_ds.append(ds)
+    print(f"Loop {i} time {datetime.now() - loopTime}")
 
 
 final_ds = xr.concat(list_ds, dim="test")
+final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
 final_ds["random_sample"] = final_ds["random_sample"].astype(str)
 
 
@@ -147,7 +151,7 @@ def compressor(ds):
 ds_concat, encoding = compressor(final_ds)
 final_ds.to_netcdf(
     str(data_dir)
-    + f"/UK-dir-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
+    + f"/UK-dem-1km{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
     encoding=encoding,
     mode="w",
 )

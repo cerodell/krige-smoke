@@ -85,10 +85,7 @@
    "outputs": [],
    "source": [
     "## Define domain of interest... this is the same bounds as the BlueSky Canada Forecasts\n",
-    "# wesn = [-160.0,-52.0,32.,70.0] \n",
-    "wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain\n",
-    "\n",
-    "# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain\n",
+    "wesn = [-122.2, -105.5, 49.0, 56.5] \n",
     "\n",
     "## Open Government AQ data and index on dot\n",
     "gov_ds = xr.open_dataset(str(data_dir) + f\"/gov_aq.nc\")\n",
@@ -338,8 +335,19 @@
    "main_language": "python",
    "notebook_metadata_filter": "-all"
   },
+  "kernelspec": {
+   "display_name": "Python 3.9.13 ('krige')",
+   "language": "python",
+   "name": "python3"
+  },
   "language_info": {
-   "name": "python"
+   "name": "python",
+   "version": "3.9.13"
+  },
+  "vscode": {
+   "interpreter": {
+    "hash": "506a1aa7448beb1b112e87bbef8f12ae563a1295677b4ade05ca2908156d5459"
+   }
   }
  },
  "nbformat": 4,
