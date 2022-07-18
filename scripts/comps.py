@@ -43,8 +43,8 @@ dot = "2021-07-16T22:00:00"
 # %%
 ## Define domain of interest... this is the same bounds as the BlueSky Canada Forecasts
 # wesn = [-160.0,-52.0,32.,70.0]
-wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
-# wesn = [-122.2, -105.5, 49.0, 56.5]
+# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
+wesn = [-126, -105.5, 45.0, 56.5]
 
 # wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
 
@@ -132,7 +132,7 @@ gpm25.head()
 # Here we will create a grid we want to use for the interpolate on.
 
 # %%
-resolution = 10_000  # cell size in meters
+resolution = 20_000  # cell size in meters
 
 gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
 gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
