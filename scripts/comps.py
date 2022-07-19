@@ -2,65 +2,63 @@
 # # Data Setup
 
 # %% [markdown]
-# ## PurpleAir and Goverment Operatated Air quality Data
-# - See find-pa-station.py,  get-pa-data.py and remormate-gov.py for how I obtanined a nd remotated the data for ease of use.
+# ### PurpleAir and Government operated air quality monitors
+# - See find-pa-station.py,  get-pa-data.py and remormate-gov.py for how I obtained and combined data in a single dataset.
 
 
 # %% [markdown]
-# ## Case Study.
-
-# I chose to fouce on July 2021, post heat dome with high fire activeity in souther BC and the PNW of the US.
-
-# TODO add image of smoke from nasa worldview.
-
+# Load python modules
 # %%
 import context
 import numpy as np
 import pandas as pd
 import xarray as xr
-import salem
-
-
 import geopandas as gpd
+
 import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.image as mpimg
 import plotly.figure_factory as ff
-from pykrige.ok import OrdinaryKriging
-from pykrige.uk import UniversalKriging
-from shapely.geometry import Polygon
-import shapely
 
-import matplotlib.pyplot as plt
-from utils.utils import pixel2poly
+from context import data_dir
 
-from context import data_dir, img_dir
-import time
+# %% [markdown]
+# ### Case Study.
 
-start_time = time.time()
+# I chose to focus on July 2021, post heat dome with high fire activity in souther BC and the PNW of the US.
+
+# %%
+
+img = mpimg.imread(str(data_dir) + "/obs/worldview.jpeg")
+fig = px.imshow(img)
+fig.update_layout(margin=dict(l=10, r=10, t=30, b=30))
+fig.show()
+
 # %% [markdown]
 # ### Choose date and time of interest to test kriging
-dot = "2021-07-16T22:00:00"
 # %%
-## Define domain of interest... this is the same bounds as the BlueSky Canada Forecasts
-# wesn = [-160.0,-52.0,32.,70.0]
-wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
-# wesn = [-126, -105.5, 45.0, 56.5]
+## Define domain and datetime of interest
+wesn = [-129.0, -90.0, 40.0, 60.0]
+dot = "2021-07-16T22:00:00"
 
-# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
 
 ## Open Government AQ data and index on dot
 gov_ds = xr.open_dataset(str(data_dir) + f"/gov_aq.nc")
-gov_ds = gov_ds.sel(datetime="2021-07-16T22:00:00")
+gov_ds = gov_ds.sel(datetime=dot)
 
 ## Open PurpleAir AQ data, index on dot and drop variables to make ds concat with gov_ds
 pa_ds = xr.open_dataset(str(data_dir) + f"/purpleair_north_america.nc")
-pa_ds = pa_ds.sel(datetime="2021-07-16T22:00:00")
+pa_ds = pa_ds.sel(datetime=dot)
 pa_ds = pa_ds.drop(["PM1.0", "PM10.0", "pressure", "PM2.5_ATM"])
 
-## concat both ds on as station id
+## concat both datasets on as station id
 ds = xr.concat([pa_ds, gov_ds], dim="id")
 
-# Drop outliers by..
+# %% [markdown]
+# ### Remove outliers by..
+# - Erroneously high values
+# - Non-physical negative values
+# - Outside two standard deviation
+# %%
 ds = ds.where(ds["PM2.5"] < 1000, drop=True)  ## Erroneously high values
 ds = ds.where(ds["PM2.5"] > 0, drop=True)  ## Non-physical negative values
 mean = ds["PM2.5"].mean()  ## outside two standard deviation
@@ -71,7 +69,11 @@ sd_ds = ds.where(
 
 sd_ds
 
-# Convert our dataset to a dataframe and drop all aq stations outside our domain
+
+# %% [markdown]
+# ### Reformat Date
+# - Convert our dataset to a dataframe and drop all aq stations outside our domain
+# %%
 df_pm25 = sd_ds["PM2.5"].to_dataframe().reset_index()
 df_pm25 = df_pm25.loc[
     (df_pm25["lat"] > wesn[2])
@@ -83,12 +85,14 @@ df_pm25 = df_pm25.loc[
 df_pm25.head()
 # %% [markdown]
 # ### Plot Data
-# Lets look at the data by first plotting the distribution of the measured PM 2.5 measured values.
+# #### Distribution
+# - Lets look at the data by first plotting the distribution of the measured PM 2.5 measured values.
 # %%
 fig = ff.create_distplot([sd_ds["PM2.5"].values], ["PM2.5"], colors=["green"])
 fig.show()
 
 # %% [markdown]
+# #### Spatial scatter plot
 # Now lets spatially look at the data by a scatter plot of the measured PM 2.5 values at each station.
 # %%
 fig = px.scatter_mapbox(
@@ -97,18 +101,18 @@ fig = px.scatter_mapbox(
     lon="lon",
     color="PM2.5",
     size="PM2.5",
-    color_continuous_scale="RdYlGn_r",
+    color_continuous_scale="jet",
     # hover_name="id",
-    center={"lat": 52.722, "lon": -103.915},
+    center={"lat": 50.0, "lon": -110.0},
     hover_data=["PM2.5"],
     mapbox_style="carto-positron",
-    zoom=1.8,
+    zoom=3.0,
 )
 fig.update_layout(margin=dict(l=0, r=100, t=30, b=10))
 fig.show()
 
 # %% [markdown]
-# We can see how the fires in BC are creating poor air quality in the east rockies and praires/plaines.
+# We can see how the fires in BC are creating poor air quality in the east rockies and prairies/plains.
 
 
 # %% [markdown]
@@ -125,3 +129,6 @@ gpm25 = gpd.GeoDataFrame(
 ).to_crs("EPSG:3347")
 gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
 gpm25.head()
+
+# %% [markdown]
+# ### Onto Ordinary Kriging...

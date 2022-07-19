@@ -89,7 +89,7 @@ def plotsns(metric, cmap):
 
 
 plotsns("rmse", cmap="coolwarm")
-plotsns("mae", cmap="coolwarm_r")
+plotsns("mae", cmap="coolwarm")
 plotsns("pr", cmap="coolwarm_r")
 
 
