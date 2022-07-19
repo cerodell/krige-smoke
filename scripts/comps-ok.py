@@ -8,10 +8,9 @@
 # - Compared to non-geostatistical algorithms, the strength of ordinary kriging is its ability to model the spatial structure (variance) of the sampled observations.
 # - An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK unsuitable for interpolation over large domains and often requires data transformation.
 
-# :::{note} Special thanks
+# <br>
+# <br>
 # Thank you to Xinli Cai for this great description of OK if her [master thesis](https://era.library.ualberta.ca/items/92cdc6ae-43fd-453f-91f2-5ff275cf85cd/view/164484ed-e950-408c-8be7-39d3764bdc15/Cai_Xinli_201704_MSc.pdf)
-# :::
-
 # %%
 import context
 import salem
@@ -121,8 +120,7 @@ print(f"OK build time {datetime.now() - startTime}")
 # #### Our variogram parameters
 #  PyKrige will optimze most parmters based on the defiend empirela mode and number of bins
 #  - I tested several empirical models and bin sizes and found (for this case study) spherical and 15 bins to be the optimal based on the output statics.
-# ```{note} the literature supports spherical for geospatial interpolation applications over other methods.
-# ```
+# - NOTE the literature supports spherical for geospatial interpolation applications over other methods.
 # %%
 plotvariogram(krig)
 
