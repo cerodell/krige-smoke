@@ -126,6 +126,7 @@ OK_pm25 = np.where(z < 0, 0, z)
 # ### Plot OK
 # Convert data to polygons to be plot-able on a slippy mapbox. This is not necessary but but :)
 
+# %%
 polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)
 pm25_model = gpd.GeoDataFrame(
     {"Modelled PM2.5": values}, geometry=polygons, crs="EPSG:3347"

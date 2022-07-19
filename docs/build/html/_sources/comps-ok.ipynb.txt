@@ -2,7 +2,7 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "id": "4947e38f",
+   "id": "0022dfd8",
    "metadata": {},
    "source": [
     "# Ordinary Kriging (OK)\n",
@@ -13,7 +13,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "6dafc03b",
+   "id": "15f347cd",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -34,7 +34,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "c6b3a95f",
+   "id": "2aba3cd2",
    "metadata": {},
    "source": [
     "Open the reformated data with the linear, meter-based, Lambert projection (EPSG:3347). Again this is helpful as lat/lon coordinates are not good for measuring distances which is important for spatial interpolation."
@@ -43,7 +43,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "89b254ea",
+   "id": "ca5e4703",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -61,7 +61,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "149ba47e",
+   "id": "da3ebc3d",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -74,7 +74,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "6a27a7c8",
+   "id": "3e5b0ae9",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -85,7 +85,7 @@
     "gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)\n",
     "gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)\n",
     "\n",
-    "## use salem to create a dataset with the grid. \n",
+    "## use salem to create a dataset with the grid.\n",
     "krig_ds = salem.Grid(\n",
     "    nxny=(len(gridx), len(gridy)),\n",
     "    dxdy=(resolution, resolution),\n",
@@ -99,18 +99,18 @@
   },
   {
    "cell_type": "markdown",
-   "id": "c9b8a889",
+   "id": "7863601d",
    "metadata": {
     "lines_to_next_cell": 0
    },
    "source": [
-    "##  Setup OK  "
+    "##  Setup OK"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "c1f3419a",
+   "id": "f5c91be1",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -133,14 +133,14 @@
   },
   {
    "cell_type": "markdown",
-   "id": "f33aeb62",
+   "id": "29cb5a2d",
    "metadata": {},
    "source": [
     "### Variogram\n",
     "#### variogram overview\n",
     "- Graphical representation of spatial autocorrelation.\n",
     "- Shows a fundamental principle of geography: closer things are more alike than things farther apart\n",
-    "- Its created by calculating the difference squared between the values of the paired locations \n",
+    "- Its created by calculating the difference squared between the values of the paired locations\n",
     "  - paired locations are binned by the distance apart\n",
     "- An empirical model is fitted to the binned (paired locations) to describe the likeness of data at a distance.\n",
     "- Type of empirical models\n",
@@ -149,11 +149,11 @@
     "   - Exponential\n",
     "   - Gaussian\n",
     "   - Linear\n",
-    " - The fitted model is applied in the interpolation process by forming (kriging) weights for the predicted areas. \n",
+    " - The fitted model is applied in the interpolation process by forming (kriging) weights for the predicted areas.\n",
     "\n",
     "#### variogram parameters\n",
     "- Three parameters that define a variogram..\n",
-    "    - sill: the total variance where the empirical model levels off, \n",
+    "    - sill: the total variance where the empirical model levels off,\n",
     "      -  is the sum of the nugget plus the sills of each nested structure.\n",
     "    - (effective) range: The distance after which data are no longer correlated.\n",
     "      -  About the distance where the variogram levels off to the sill.\n",
@@ -163,17 +163,17 @@
     "\n",
     "\n",
     "### variogram statistics\n",
-    "A good model should result in \n",
+    "A good model should result in\n",
     "  - Q1 close to zero,\n",
-    "  - Q2 close to one, and \n",
+    "  - Q2 close to one, and\n",
     "  - cR as small as possible.\n",
-    "TODO define above stats variables. "
+    "TODO define above stats variables."
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "ee467873",
+   "id": "e0a7df10",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -184,19 +184,19 @@
   },
   {
    "cell_type": "markdown",
-   "id": "30cac52a",
+   "id": "a4e52609",
    "metadata": {
     "lines_to_next_cell": 0
    },
    "source": [
     "### Execute OK\n",
-    "Interpolate data to our grid using OK. "
+    "Interpolate data to our grid using OK."
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "bf75a9f2",
+   "id": "3a03336d",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -210,14 +210,22 @@
   },
   {
    "cell_type": "markdown",
-   "id": "e1465cb9",
+   "id": "7687f009",
+   "metadata": {},
+   "source": [
+    "### Plot OK\n",
+    "Convert data to polygons to be plot-able on a slippy mapbox. This is not necessary but but :)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "909f48ce",
    "metadata": {
     "lines_to_next_cell": 2
    },
+   "outputs": [],
    "source": [
-    "### Plot OK\n",
-    "Convert data to polygons to be plot-able on a slippy mapbox. This is not necessary but but :) \n",
-    "\n",
     "polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)\n",
     "pm25_model = gpd.GeoDataFrame(\n",
     "    {\"Modelled PM2.5\": values}, geometry=polygons, crs=\"EPSG:3347\"\n",
@@ -229,7 +237,7 @@
     "    locations=pm25_model.index,\n",
     "    color=\"Modelled PM2.5\",\n",
     "    color_continuous_scale=\"jet\",\n",
-    "    center={\"lat\": 50., \"lon\": -110.},\n",
+    "    center={\"lat\": 50.0, \"lon\": -110.0},\n",
     "    zoom=2.5,\n",
     "    mapbox_style=\"carto-positron\",\n",
     "    opacity=0.8,\n",
@@ -240,7 +248,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "e94158be",
+   "id": "270756f4",
    "metadata": {},
    "source": [
     "### Onto Universal Kriging..."
