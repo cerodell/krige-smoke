@@ -17,10 +17,6 @@ sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("../../"))
 
 
-def setup(app):
-    app.add_stylesheet("css/custom.css")
-
-
 # -- Project information -----------------------------------------------------
 
 project = "Explore Kriging"
@@ -34,17 +30,15 @@ author = "Christopher Rodell"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
-    "sphinx.ext.autosectionlabel",
     "sphinx.ext.napoleon",
-    "sphinx_automodapi.automodapi",
-    "recommonmark",
-    # "sphinx_markdown_tables",
+    "sphinx.ext.autosectionlabel",
     "nbsphinx",
-    "sphinx.ext.mathjax",
+    "myst_parser",
+    "sphinx_copybutton",
 ]
-
 # use language set by highlight directive if no language is set by role
 inline_highlight_respect_highlight = False
 
