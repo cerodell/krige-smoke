@@ -31,9 +31,9 @@ def pixel2poly(x, y, z, resolution):
 def plotvariogram(krig):
     fig = plt.figure(figsize=(8, 4))
     ax = fig.add_subplot(111)
-    ax.plot(krig.lags, krig.semivariance, "go")
+    ax.plot(krig.lags / 1000, krig.semivariance, "go")
     ax.plot(
-        krig.lags,
+        krig.lags / 1000,
         krig.variogram_function(krig.variogram_model_parameters, krig.lags),
         "k-",
     )
@@ -52,26 +52,28 @@ def plotvariogram(krig):
         print("Using Custom Variogram Model")
     else:
         fig_title += f"Using {(krig.variogram_model).title()} Variogram Model" + "\n"
-        fig_title += (
+        fig_title2 = (
             f"Partial Sill: {np.round(krig.variogram_model_parameters[0])}" + "\n"
         )
-        fig_title += (
+        fig_title2 += (
             f"Full Sill: {np.round(krig.variogram_model_parameters[0] + krig.variogram_model_parameters[2])}"
             + "\n"
         )
-        fig_title += f"Range: {np.round(krig.variogram_model_parameters[1])}" + "\n"
-        fig_title += f"Nugget: {np.round(krig.variogram_model_parameters[2],2)}"
+        fig_title2 += (
+            f"Range (km): {np.round(krig.variogram_model_parameters[1])/1000}" + "\n"
+        )
+        fig_title2 += f"Nugget: {np.round(krig.variogram_model_parameters[2],2)}"
     ax.set_title(fig_title, loc="left", fontsize=14)
-    fig_title2 = (
-        f"Q1 = {np.round(krig.Q1,4)}"
-        + "\n"
-        + f"Q2 = {np.round(krig.Q2,4)}"
-        + "\n"
-        + f"cR = {np.round(krig.cR,4)}"
-    )
+    # fig_title2 = (
+    #     f"Q1 = {np.round(krig.Q1,4)}"
+    #     + "\n"
+    #     + f"Q2 = {np.round(krig.Q2,4)}"
+    #     + "\n"
+    #     + f"cR = {np.round(krig.cR,4)}"
+    # )
     ax.set_title(fig_title2, loc="right", fontsize=14)
 
-    ax.set_xlabel("Lag", fontsize=12)
+    ax.set_xlabel("Lag (Distance km)", fontsize=12)
     ax.set_ylabel("Semivariance", fontsize=12)
     ax.tick_params(axis="both", which="major", labelsize=12)
     return

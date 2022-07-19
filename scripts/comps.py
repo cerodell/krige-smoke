@@ -3,7 +3,9 @@
 
 # %% [markdown]
 # ### PurpleAir and Government operated air quality monitors
-# - See find-pa-station.py,  get-pa-data.py and remormate-gov.py for how I obtained and combined data in a single dataset.
+# - See [find-pa-station.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/find-pa-sations.py),
+#  [get-pa-data.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/get-pa-data.py)
+#  and [reformate-gov.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/reformate-gov.py) for how I obtained and combined data in a single dataset.
 
 
 # %% [markdown]
@@ -24,7 +26,7 @@ from context import data_dir
 # %% [markdown]
 # ### Case Study.
 
-# I chose to focus on July 2021, post heat dome with high fire activity in souther BC and the PNW of the US.
+# We will focus on July 2021, post heat dome with high fire activity in southern BC, SK, MD, and the PNW of the US.
 
 # %%
 
@@ -34,7 +36,7 @@ fig.update_layout(margin=dict(l=10, r=10, t=30, b=30))
 fig.show()
 
 # %% [markdown]
-# ### Choose date and time of interest to test kriging
+# ### Choose datetime and domain of interest to test kriging
 # %%
 ## Define domain and datetime of interest
 wesn = [-129.0, -90.0, 40.0, 60.0]
@@ -82,18 +84,19 @@ df_pm25 = df_pm25.loc[
     & (df_pm25["lon"] < wesn[1])
 ]
 
+print(f"Number of AQ Monitors: {len(df_pm25)}")
 df_pm25.head()
 # %% [markdown]
 # ### Plot Data
 # #### Distribution
-# - Lets look at the data by first plotting the distribution of the measured PM 2.5 measured values.
+# Let's look at the data by plotting the measured PM 2.5 values distribution.
 # %%
 fig = ff.create_distplot([sd_ds["PM2.5"].values], ["PM2.5"], colors=["green"])
 fig.show()
 
 # %% [markdown]
 # #### Spatial scatter plot
-# Now lets spatially look at the data by a scatter plot of the measured PM 2.5 values at each station.
+# Now, let's look at the data by a scatter plot of the measured PM 2.5 values at each station.
 # %%
 fig = px.scatter_mapbox(
     df_pm25,
@@ -112,13 +115,13 @@ fig.update_layout(margin=dict(l=0, r=100, t=30, b=10))
 fig.show()
 
 # %% [markdown]
-# We can see how the fires in BC are creating poor air quality in the east rockies and prairies/plains.
+# We can see how the fires in BC are creating poor air quality in the eastern Rockies and prairies/plains.
 
 
 # %% [markdown]
 # ### Reproject Data
 
-# We want to convert the data to the linear, meter-based Lambert projection (EPSG:3347) recommended by Statistics Canada. This is helpful as lat/lon coordinates are not good for measuring distances which is important for interpolating data.
+# We want to convert the data to the linear, meter-based Lambert projection (EPSG:3347) recommended by Statistics Canada. This conversion is helpful as lat/lon coordinates are not suitable for measuring distances which is vital for interpolating data.
 
 # %%
 

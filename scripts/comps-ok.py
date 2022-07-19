@@ -1,7 +1,15 @@
 # %% [markdown]
 # # Ordinary Kriging (OK)
 
-# TODO define ordinary Kriging
+# - Ordinary Kriging (OK) is a commonly used geostatistical method.
+# - OK provides the best linear unbiased estimates (BLUE), where the estimated value for the point of interest is a weighted linear combination of sampled observations (i.e., the sum of weights is 1) [Matheron1963](http://dx.doi.org/10.2113/gsecongeo.58.8.1246).
+# - OK is similar to but more advanced than Inverse distance weighting, as the weight 𝜆𝑖 of OK is estimated by minimizing the variance of the prediction errors.
+#   - This is achieved by constructing a semivariogram that models the difference between neighboring values.
+# - Compared to non-geostatistical algorithms, the strength of ordinary kriging is its ability to model the spatial structure (variance) of the sampled observations.
+# - An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK unsuitable for interpolation over large domains and often requires data transformation.
+
+# ```{note} Thank you to Xinli Cai for this great description of OK if her [master thesis](https://era.library.ualberta.ca/items/92cdc6ae-43fd-453f-91f2-5ff275cf85cd/view/164484ed-e950-408c-8be7-39d3764bdc15/Cai_Xinli_201704_MSc.pdf)
+# ```
 
 # %%
 import context
@@ -19,7 +27,7 @@ from utils.utils import pixel2poly, plotvariogram
 from context import data_dir
 
 # %% [markdown]
-# Open the reformated data with the linear, meter-based, Lambert projection (EPSG:3347). Again this is helpful as lat/lon coordinates are not good for measuring distances which is important for spatial interpolation.
+# Open the reformated data with the linear, meter-based Lambert projection (EPSG:3347). Again this is helpful as lat/lon coordinates are not suitable for measuring distances which is vital for spatial interpolation.
 
 # %%
 df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
@@ -34,10 +42,10 @@ gpm25.head()
 
 # %% [markdown]
 # ### Create Grid
-# Here we will create a grid we want to use for the interpolation.
-# - NOTE we will use salem to create a dataset with the grid. This will be more useful for the universal kriging when we reproject other gridded data to act as covariances for interpolation
+# Here, we will create a grid we want to use for the interpolation.
+# NOTE we will use salem to create a dataset with the grid. This grid as a xarray dataset will be helpful for the universal kriging when we reproject other gridded data to act as covariances for interpolation.
 # %%
-## define the desired  grid resolution in meters
+## define the desired grid resolution in meters
 resolution = 20_000  # grid cell size in meters
 
 ## make grid based on dataset bounds and resolution
@@ -67,7 +75,7 @@ krig = OrdinaryKriging(
     y=gpm25["Northing"],
     z=gpm25["PM2.5"],
     variogram_model=variogram_model,
-    enable_statistics=True,
+    # enable_statistics=True,
     nlags=nlags,
 )
 print(f"OK build time {datetime.now() - startTime}")
@@ -102,11 +110,18 @@ print(f"OK build time {datetime.now() - startTime}")
 
 #### variogram statistics
 # A good model should result in
-#   - Q1 close to zero,
-#   - Q2 close to one, and
+#   - Q1 close to zero
+
+#   - Q2 close to one
 #   - cR as small as possible.
 # TODO define above stats variables.
 
+# %% [markdown]
+# #### Our variogram parameters
+#  PyKrige will optimze most parmters based on the defiend empirela mode and number of bins
+#  - I tested several empirical models and bin sizes and found (for this case study) spherical and 15 bins to be the optimal based on the output statics.
+# ```{note} the literature supports spherical for geospatial interpolation applications over other methods.
+# ```
 # %%
 plotvariogram(krig)
 
@@ -123,8 +138,8 @@ OK_pm25 = np.where(z < 0, 0, z)
 # krig_ds["OK_pm25"] = (("y", "x"), OK_pm25)
 
 # %% [markdown]
-# ### Plot OK
-# Convert data to polygons to be plot-able on a slippy mapbox. This is not necessary but but :)
+# ### Plot OK Modelled PM2.5
+# Convert data to polygons to be plot-able on a slippy mapbox. The conversion is not necessary, just fun to plot on a slippy map :)
 
 # %%
 polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)
@@ -145,6 +160,7 @@ fig = px.choropleth_mapbox(
 )
 fig.update_layout(margin=dict(l=0, r=0, t=30, b=10))
 fig.update_traces(marker_line_width=0)
+fig.show()
 
 
 # %% [markdown]
