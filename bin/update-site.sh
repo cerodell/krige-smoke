@@ -10,5 +10,5 @@ mv /Users/rodell/krige-smoke/scripts/comps-uk.ipynb /Users/rodell/krige-smoke/do
 
 cd /Users/rodell/krige-smoke/docs
 
-make clean
+# make clean
 make html

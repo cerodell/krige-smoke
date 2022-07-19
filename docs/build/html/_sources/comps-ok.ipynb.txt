@@ -2,26 +2,27 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "id": "44ae1cf2",
+   "id": "a29f4ad7",
    "metadata": {},
    "source": [
     "# Ordinary Kriging (OK)\n",
     "\n",
     "- Ordinary Kriging (OK) is a commonly used geostatistical method.\n",
-    "- OK provides the best linear unbiased estimates (BLUE), where the estimated value for the point of interest is a weighted linear combination of sampled observations (i.e., the sum of weights is 1) [Matheron1963](http://dx.doi.org/10.2113/gsecongeo.58.8.1246). \n",
-    "- OK is similar to but more advanced than Inverse distance weighting, as the weight 𝜆𝑖 of OK is estimated by minimizing the variance of the prediction errors. \n",
+    "- OK provides the best linear unbiased estimates (BLUE), where the estimated value for the point of interest is a weighted linear combination of sampled observations (i.e., the sum of weights is 1) [Matheron1963](http://dx.doi.org/10.2113/gsecongeo.58.8.1246).\n",
+    "- OK is similar to but more advanced than Inverse distance weighting, as the weight 𝜆𝑖 of OK is estimated by minimizing the variance of the prediction errors.\n",
     "  - This is achieved by constructing a semivariogram that models the difference between neighboring values.\n",
-    "- Compared to non-geostatistical algorithms, the strength of ordinary kriging is its ability to model the spatial structure (variance) of the sampled observations. \n",
-    "- An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK unsuitable for interpolation over large domains and often requires data transformation. \n",
+    "- Compared to non-geostatistical algorithms, the strength of ordinary kriging is its ability to model the spatial structure (variance) of the sampled observations.\n",
+    "- An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK unsuitable for interpolation over large domains and often requires data transformation.\n",
     "\n",
-    "```{note} Thank you to Xinli Cai for this great description of OK if her [master thesis](https://era.library.ualberta.ca/items/92cdc6ae-43fd-453f-91f2-5ff275cf85cd/view/164484ed-e950-408c-8be7-39d3764bdc15/Cai_Xinli_201704_MSc.pdf) \n",
-    "```"
+    ":::{note} Special thanks\n",
+    "Thank you to Xinli Cai for this great description of OK if her [master thesis](https://era.library.ualberta.ca/items/92cdc6ae-43fd-453f-91f2-5ff275cf85cd/view/164484ed-e950-408c-8be7-39d3764bdc15/Cai_Xinli_201704_MSc.pdf)\n",
+    ":::"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "b66c461a",
+   "id": "2d4601f4",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -42,7 +43,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "1e714b0a",
+   "id": "45f6a3ac",
    "metadata": {},
    "source": [
     "Open the reformated data with the linear, meter-based Lambert projection (EPSG:3347). Again this is helpful as lat/lon coordinates are not suitable for measuring distances which is vital for spatial interpolation."
@@ -51,7 +52,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "e9a42592",
+   "id": "4d52aa04",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -69,7 +70,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "f1efee90",
+   "id": "e1f42567",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -82,7 +83,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "f41bd5b3",
+   "id": "426aad64",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -107,7 +108,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "d5bb7ae3",
+   "id": "499521e8",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -118,7 +119,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "b3a0ed51",
+   "id": "c558f9d6",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -141,7 +142,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "a41fe197",
+   "id": "55772ad2",
    "metadata": {},
    "source": [
     "### Variogram\n",
@@ -181,22 +182,22 @@
   },
   {
    "cell_type": "markdown",
-   "id": "d1ffa605",
+   "id": "a674955a",
    "metadata": {
     "lines_to_next_cell": 0
    },
    "source": [
     "#### Our variogram parameters\n",
     " PyKrige will optimze most parmters based on the defiend empirela mode and number of bins\n",
-    " - I tested several empirical models and bin sizes and found (for this case study) spherical and 15 bins to be the optimal based on the output statics. \n",
-    "```{note} the literature supports spherical for geospatial interpolation applications over other methods. \n",
+    " - I tested several empirical models and bin sizes and found (for this case study) spherical and 15 bins to be the optimal based on the output statics.\n",
+    "```{note} the literature supports spherical for geospatial interpolation applications over other methods.\n",
     "```"
    ]
   },
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "8494b170",
+   "id": "2003ba79",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -207,7 +208,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "2c9c3b23",
+   "id": "110d3a0a",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -219,7 +220,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "571dd841",
+   "id": "bc3158b1",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -233,7 +234,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "7df0664b",
+   "id": "a301e126",
    "metadata": {},
    "source": [
     "### Plot OK Modelled PM2.5\n",
@@ -243,7 +244,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "a1434b48",
+   "id": "f473fc09",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -272,7 +273,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "90ad36cf",
+   "id": "53a6d422",
    "metadata": {},
    "source": [
     "### Onto Universal Kriging..."

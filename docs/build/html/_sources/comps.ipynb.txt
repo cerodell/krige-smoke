@@ -2,7 +2,7 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "id": "d97a49e4",
+   "id": "6efd18b5",
    "metadata": {},
    "source": [
     "# Data Setup"
@@ -10,19 +10,20 @@
   },
   {
    "cell_type": "markdown",
-   "id": "2af660b7",
-   "metadata": {},
+   "id": "ac5e2c20",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
    "source": [
     "### PurpleAir and Government operated air quality monitors\n",
-    "- See [find-pa-station.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/find-pa-sations.py), \n",
+    "- See [find-pa-station.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/find-pa-sations.py),\n",
     " [get-pa-data.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/get-pa-data.py)\n",
-    " and [reformate-gov.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/reformate-gov.py) for how I obtained and combined data in a single dataset.\n",
-    "\n"
+    " and [reformate-gov.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/reformate-gov.py) for how I obtained and combined data in a single dataset."
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "5b95b9fb",
+   "id": "f0e23189",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -33,7 +34,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "89df521d",
+   "id": "4adb4371",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -52,7 +53,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "6934d57e",
+   "id": "08312860",
    "metadata": {},
    "source": [
     "### Case Study.\n",
@@ -63,7 +64,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "c22cfdf5",
+   "id": "bf47fd19",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -76,7 +77,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "7f257603",
+   "id": "2e388b08",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -87,7 +88,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "6373bf1a",
+   "id": "54eb6e71",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -111,7 +112,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "23150141",
+   "id": "bbc7487f",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -125,7 +126,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "7488f929",
+   "id": "feca0829",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -144,7 +145,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "9874b931",
+   "id": "cd70b03c",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -156,7 +157,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "acd020a2",
+   "id": "aa17e1e8",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -176,7 +177,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "ccb7ab96",
+   "id": "e3e4eda3",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -189,7 +190,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "27c7fd6d",
+   "id": "af40a731",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -199,7 +200,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "61574cd8",
+   "id": "d852b71b",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -211,7 +212,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "7b296495",
+   "id": "9e69bfb1",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -234,7 +235,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "f9872509",
+   "id": "675ebeed",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -244,7 +245,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "32881a36",
+   "id": "e374bde0",
    "metadata": {},
    "source": [
     "### Reproject Data\n",
@@ -255,7 +256,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "c8869a38",
+   "id": "abe40b5d",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -271,7 +272,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "dc16c452",
+   "id": "9723461a",
    "metadata": {},
    "source": [
     "### Onto Ordinary Kriging..."
