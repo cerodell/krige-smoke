@@ -14,6 +14,7 @@ import pandas as pd
 import xarray as xr
 import geopandas as gpd
 from pykrige.uk import UniversalKriging
+import gstools as gs
 
 import plotly.express as px
 from datetime import datetime
@@ -26,6 +27,7 @@ from context import data_dir
 
 # %%
 df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
+lat, lon, pm25 = df["lat"], df["lon"], df["PM2.5"]
 gpm25 = gpd.GeoDataFrame(
     df,
     crs="EPSG:4326",
@@ -84,7 +86,7 @@ variogram_model = "spherical"
 
 
 def north_south_drift(y, x):
-    """North south trend depending linearly on latitude."""
+    """North south trend depending linearly on y."""
     return y
 
 
@@ -93,10 +95,10 @@ krig = UniversalKriging(
     x=gpm25["Easting"],
     y=gpm25["Northing"],
     z=gpm25["PM2.5"],
-    # drift_terms="external_Z",
+    # drift_terms="regional_linear",
+    functional_drift=north_south_drift,
     variogram_model=variogram_model,
     nlags=nlags,
-    functional_drift=north_south_drift,
 )
 print(f"UK build time {datetime.now() - startTime}")
 
@@ -111,6 +113,42 @@ print(f"UK execution time {datetime.now() - startTime}")
 UK_pm25 = np.where(z < 0, 0, z)
 
 krig_ds["UK_pm25"] = (("y", "x"), UK_pm25)
+
+
+bins = gs.standard_bins((lat, lon), max_dist=np.deg2rad(8), latlon=True)
+bin_c, vario = gs.vario_estimate((lat, lon), pm25, bin_edges=bins, latlon=True)
+
+
+model = gs.Spherical(latlon=True, rescale=gs.EARTH_RADIUS)
+model.fit_variogram(bin_c, vario, nugget=False)
+ax = model.plot("vario_yadrenko", x_max=bin_c[-1])
+ax.scatter(bin_c, vario)
+ax.set_xlabel("great circle distance / radians")
+ax.set_ylabel("semi-variogram")
+fig = ax.get_figure()
+# fig.savefig(os.path.join("..", "results", "variogram.pdf"), dpi=300)
+print(model)
+
+
+def north_south_drift(lat, lon):
+    """North south trend depending linearly on latitude."""
+    return lat
+
+
+startTime = datetime.now()
+uk = gs.krige.Universal(
+    model=model,
+    cond_pos=(lat, lon),
+    cond_val=pm25,
+    drift_functions=north_south_drift,
+)
+print(f"UK build time {datetime.now() - startTime}")
+
+g_lat = np.arange(lat.min(), lat.max(), 1.0)
+g_lon = np.arange(lon.min(), lon.max(), 1.0)
+
+fld_uk = uk((g_lat, g_lon), mesh_type="structured", return_var=False)
+
 
 # %% [markdown]
 # ### Plot UK

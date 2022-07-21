@@ -6,6 +6,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import gstools as gs
 from context import data_dir
+from datetime import datetime
 
 # ids, lat, lon, pm25 = np.loadtxt(os.path.join("..", "data", "pm25_obs.txt")).T
 
@@ -44,35 +45,44 @@ def north_south_drift(lat, lon):
     return lat
 
 
+startTime = datetime.now()
 uk = gs.krige.Universal(
     model=model,
     cond_pos=(lat, lon),
     cond_val=pm25,
-    # drift_functions=north_south_drift,
+    drift_functions=north_south_drift,
 )
+print(f"UK build time {datetime.now() - startTime}")
 
 # fit linear regression model for pm25erature depending on latitude
 regress = stats.linregress(lat, pm25)
 trend = lambda x, y: regress.intercept + regress.slope * x
 
+startTime = datetime.now()
 dk = gs.krige.Detrended(
     model=model,
     cond_pos=(lat, lon),
     cond_val=pm25,
     trend=trend,
 )
+print(f"RK build time {datetime.now() - startTime}")
 
 ###############################################################################
 # Now we generate the kriging field, by defining a lat-lon grid that covers
 # the whole of Germany. The :any:`Krige` class provides the option to only
 # krige the mean field, so one can have a glimpse at the estimated drift.
 
-g_lat = np.arange(lat.min(), lat.max(), 1.0)
-g_lon = np.arange(lon.min(), lon.max(), 1.0)
-
+g_lat = np.arange(lat.min(), lat.max() + 2, 1.0)
+g_lon = np.arange(lon.min(), lon.max() + 2, 1.0)
+startTime = datetime.now()
 fld_uk = uk((g_lat, g_lon), mesh_type="structured", return_var=False)
+print(f"UK exectue time {datetime.now() - startTime}")
+
 mean = uk((g_lat, g_lon), mesh_type="structured", only_mean=True)
+
+startTime = datetime.now()
 fld_dk = dk((g_lat, g_lon), mesh_type="structured", return_var=False)
+print(f"RK exectue time {datetime.now() - startTime}")
 
 ###############################################################################
 # And that's it. Now let's have a look at the generated field and the input

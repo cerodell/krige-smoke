@@ -20,7 +20,9 @@ import xarray as xr
 import geopandas as gpd
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
+import pykrige
 
+print(pykrige.__version__)
 
 import plotly.express as px
 from datetime import datetime
@@ -66,10 +68,27 @@ krig_ds = salem.Grid(
 krig_ds
 
 
-era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
-era_ds["degrees"] = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
+# era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
+# era_ds["degrees"] = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
 
-era_ds = krig_ds.salem.transform(era_ds)
+dem_ds = salem.open_xr_dataset(str(data_dir) + f"/elev.americas.5-min.nc")
+dem_ds["lon"] = dem_ds["lon"] - 360
+
+dem_ds = krig_ds.salem.transform(dem_ds)
+
+
+y = xr.DataArray(
+    np.array(gpm25["Northing"]),
+    dims="ids",
+    coords=dict(ids=gpm25.id.values),
+)
+x = xr.DataArray(
+    np.array(gpm25["Easting"]),
+    dims="ids",
+    coords=dict(ids=gpm25.id.values),
+)
+dem_points = dem_ds.data.interp(x=x, y=y, method="linear")
+gpm25["dem"] = dem_points.data[0, :]
 
 # %% [markdown]
 # ##  Setup OK
@@ -90,14 +109,40 @@ print(f"OK build time {datetime.now() - startTime}")
 
 
 startTime = datetime.now()
+krig_uk_dem = UniversalKriging(
+    x=df["Easting"],  ## x location of aq monitors in lambert conformal
+    y=df["Northing"],  ## y location of aq monitors in lambert conformal
+    z=df["PM2.5"],  ## measured PM 2.5 concentrations at locations
+    drift_terms=["external_Z", "specified"],
+    external_drift=dem_ds.data.values[
+        0, :, :
+    ].T,  ## 2d array of dem used for external drift
+    external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
+    external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
+    specified_drift=df["dem"],  ## elevation of aq monitors
+)
+print(f"UK build time {datetime.now() - startTime}")
+
+
+external_x2_index = np.amin(np.where(gridx >= xn)[0])
+external_x1_index = np.amax(np.where(gridx <= xn)[0])
+external_y2_index = np.amin(np.where(gridy >= yn)[0])
+external_y1_index = np.amax(np.where(gridy <= yn)[0])
+
+
+def north_south_drift(y, x):
+    """North south trend depending linearly on latitude."""
+    return y
+
+
+startTime = datetime.now()
 krig_uk = UniversalKriging(
     x=gpm25["Easting"],
     y=gpm25["Northing"],
     z=gpm25["PM2.5"],
-    drift_terms="regional_linear",
-    # variogram_model=variogram_model,
+    variogram_model=variogram_model,
     nlags=nlags,
-    # external_drift=era_ds["degrees"].values,
+    functional_drift=north_south_drift,
 )
 print(f"UK build time {datetime.now() - startTime}")
 
@@ -131,5 +176,5 @@ z, ss = krig_uk2.execute("grid", gridx, gridy)
 print(f"OK execution time {datetime.now() - startTime}")
 OK_pm25_uk2 = np.where(z < 0, 0, z)
 
-krig_ds["OK_pm25"] = (("y", "x"), OK_pm25_uk2 - OK_pm25_uk)
+krig_ds["OK_pm25"] = (("y", "x"), OK_pm25_uk - OK_pm25_ok)
 krig_ds["OK_pm25"].plot()

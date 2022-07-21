@@ -17,9 +17,8 @@ import salem
 import numpy as np
 import pandas as pd
 import xarray as xr
-import gstools as gs
 import geopandas as gpd
-from pykrige.ok import OrdinaryKriging
+import gstools as gs
 
 import plotly.express as px
 from datetime import datetime
@@ -32,76 +31,30 @@ from context import data_dir
 
 # %%
 df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
-lat, lon, pm25 = df["lat"], df["lon"], df["PM2.5"]
-gpm25 = gpd.GeoDataFrame(
-    df,
-    crs="EPSG:4326",
-    geometry=gpd.points_from_xy(df["lon"], df["lat"]),
-).to_crs("EPSG:3347")
-gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
-gpm25.head()
-
+df.head()
 
 # %% [markdown]
 # ### Create Grid
 # Here, we will create a grid we want to use for the interpolation.
 # NOTE we will use salem to create a dataset with the grid. This grid as a xarray dataset will be helpful for the universal kriging when we reproject other gridded data to act as covariances for interpolation.
 # %%
-
-bins = gs.standard_bins((lat, lon), max_dist=np.deg2rad(8), latlon=True)
-bin_c, vario = gs.vario_estimate((lat, lon), pm25, bin_edges=bins, latlon=True)
-
-model = gs.Spherical(latlon=True, rescale=gs.EARTH_RADIUS, dim=2)
-model.fit_variogram(bin_c, vario, nugget=True)
-ax = model.plot("vario_yadrenko", x_max=bin_c[-1])
-ax.scatter(bin_c, vario)
-ax.set_xlabel("great circle distance / radians")
-ax.set_ylabel("semi-variogram")
-fig = ax.get_figure()
-fig.show()
-print(model)
-
-
-cov_model = gs.Gaussian(dim=2, len_scale=4, anis=0.2, angles=-0.5, var=0.5, nugget=0.1)
-
 ## define the desired grid resolution in meters
-resolution = 1  # grid cell size in meters
+resolution = 0.2  # grid cell size in meters
 
 ## make grid based on dataset bounds and resolution
-# gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
-# gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
-
-gridx = np.arange(lon.min(), lon.max(), resolution)
-gridy = np.arange(lat.min(), lat.max(), resolution)
+gridx = np.arange(df["lon"].min(), df["lon"].max() + 1, resolution)
+gridy = np.arange(df["lat"].min(), df["lat"].max() + 1, resolution)
 
 ## use salem to create a dataset with the grid.
 krig_ds = salem.Grid(
     nxny=(len(gridx), len(gridy)),
     dxdy=(resolution, resolution),
-    x0y0=(lon.min(), lat.min()),
-    proj="epsg:3347",
+    x0y0=(df["lon"].min(), df["lat"].min()),
+    proj="epsg:4326",
     pixel_ref="corner",
 ).to_dataset()
 ## print dataset
 krig_ds
-
-# %% [markdown]
-# ##  Setup OK
-# %%
-nlags = 15
-variogram_model = "spherical"
-
-startTime = datetime.now()
-krig = OrdinaryKriging(
-    x=gpm25["lon"],
-    y=gpm25["lat"],
-    z=gpm25["PM2.5"],
-    variogram_model=variogram_model,
-    coordinates_type="geographic",
-    # enable_statistics=True,
-    # nlags=len(bins),
-)
-print(f"OK build time {datetime.now() - startTime}")
 
 
 # %% [markdown]
@@ -145,7 +98,35 @@ print(f"OK build time {datetime.now() - startTime}")
 # - I tested several empirical models and bin sizes and found (for this case study) that a spherical model with 15 bins was optimal based on the output statics.
 # - NOTE the literature supports spherical for geospatial interpolation applications over other methods.
 # %%
-plotvariogram(krig)
+
+bins = gs.standard_bins((df["lat"], df["lon"]), max_dist=np.deg2rad(8), latlon=True)
+bin_c, vario = gs.vario_estimate(
+    (df["lat"], df["lon"]), df["PM2.5"], bin_edges=bins, latlon=True
+)
+
+
+model = gs.Spherical(latlon=True, rescale=gs.EARTH_RADIUS)
+model.fit_variogram(bin_c, vario, nugget=False)
+ax = model.plot("vario_yadrenko", x_max=bin_c[-1])
+ax.scatter(bin_c, vario)
+ax.set_xlabel("great circle distance / radians")
+ax.set_ylabel("semi-variogram")
+fig = ax.get_figure()
+
+print(model)
+
+
+# %% [markdown]
+# ##  Setup OK
+# %%
+
+startTime = datetime.now()
+ok = gs.krige.Ordinary(
+    model=model,
+    cond_pos=(df["lat"], df["lon"]),
+    cond_val=df["PM2.5"],
+)
+print(f"ok build time {datetime.now() - startTime}")
 
 
 # %% [markdown]
@@ -153,21 +134,22 @@ plotvariogram(krig)
 # Interpolate data to our grid using OK.
 # %%
 startTime = datetime.now()
-z, ss = krig.execute("grid", gridx, gridy)
-print(f"OK execution time {datetime.now() - startTime}")
-OK_pm25 = np.where(z < 0, 0, z)
-
-# krig_ds["OK_pm25"] = (("y", "x"), OK_pm25)
+fld_ok = ok((gridy, gridx), mesh_type="structured", return_var=False)
+print(f"ok exectue time {datetime.now() - startTime}")
+fld_ok = np.where(fld_ok < 0, 0, fld_ok)
+krig_ds["fld_ok"] = (("y", "x"), fld_ok)
 
 # %% [markdown]
 # ### Plot OK Modelled PM2.5
 # Convert data to polygons to be plot-able on a slippy mapbox. The conversion is not necessary, just fun to plot on a slippy map :)
 
 # %%
-polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)
+polygons, values = pixel2poly(gridx, gridy, fld_ok, resolution)
+
+
 pm25_model = gpd.GeoDataFrame(
-    {"Modelled PM2.5": values}, geometry=polygons, crs="EPSG:3347"
-).to_crs("EPSG:4326")
+    {"Modelled PM2.5": values}, geometry=polygons, crs="EPSG:4326"
+)
 
 fig = px.choropleth_mapbox(
     pm25_model,
