@@ -17,6 +17,7 @@ import salem
 import numpy as np
 import pandas as pd
 import xarray as xr
+import gstools as gs
 import geopandas as gpd
 from pykrige.ok import OrdinaryKriging
 
@@ -31,6 +32,7 @@ from context import data_dir
 
 # %%
 df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
+lat, lon, pm25 = df["lat"], df["lon"], df["PM2.5"]
 gpm25 = gpd.GeoDataFrame(
     df,
     crs="EPSG:4326",
@@ -45,18 +47,28 @@ gpm25.head()
 # Here, we will create a grid we want to use for the interpolation.
 # NOTE we will use salem to create a dataset with the grid. This grid as a xarray dataset will be helpful for the universal kriging when we reproject other gridded data to act as covariances for interpolation.
 # %%
+
+bins = gs.standard_bins((lat, lon), max_dist=np.deg2rad(8), latlon=True)
+bin_c, vario = gs.vario_estimate((lat, lon), pm25, bin_edges=bins, latlon=True)
+
+model = gs.Spherical(latlon=True, rescale=gs.EARTH_RADIUS)
+model.fit_variogram(bin_c, vario, nugget=False)
+
 ## define the desired grid resolution in meters
-resolution = 20_000  # grid cell size in meters
+resolution = 1  # grid cell size in meters
 
 ## make grid based on dataset bounds and resolution
-gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
-gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
+# gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
+# gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
+
+gridx = np.arange(lon.min(), lon.max(), resolution)
+gridy = np.arange(lat.min(), lat.max(), resolution)
 
 ## use salem to create a dataset with the grid.
 krig_ds = salem.Grid(
     nxny=(len(gridx), len(gridy)),
     dxdy=(resolution, resolution),
-    x0y0=(gpm25.bounds.minx.min(), gpm25.bounds.miny.min()),
+    x0y0=(lon.min(), lat.min()),
     proj="epsg:3347",
     pixel_ref="corner",
 ).to_dataset()
@@ -71,12 +83,13 @@ variogram_model = "spherical"
 
 startTime = datetime.now()
 krig = OrdinaryKriging(
-    x=gpm25["Easting"],
-    y=gpm25["Northing"],
+    x=gpm25["lon"],
+    y=gpm25["lat"],
     z=gpm25["PM2.5"],
-    variogram_model=variogram_model,
+    variogram_model=model,
+    coordinates_type="geographic",
     # enable_statistics=True,
-    nlags=nlags,
+    # nlags=len(bins),
 )
 print(f"OK build time {datetime.now() - startTime}")
 

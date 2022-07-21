@@ -85,6 +85,7 @@ krig = UniversalKriging(
     x=gpm25["Easting"],
     y=gpm25["Northing"],
     z=gpm25["PM2.5"],
+    drift_terms="regional_linear",
     variogram_model=variogram_model,
     nlags=nlags,
     external_drift=era_ds["degrees"].values,
@@ -101,7 +102,7 @@ z, ss = krig.execute("grid", gridx, gridy)
 print(f"UK execution time {datetime.now() - startTime}")
 UK_pm25 = np.where(z < 0, 0, z)
 
-# krig_ds["UK_pm25"] = (("y", "x"), UK_pm25)
+krig_ds["UK_pm25"] = (("y", "x"), UK_pm25)
 
 # %% [markdown]
 # ### Plot UK

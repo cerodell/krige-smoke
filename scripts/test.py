@@ -1,107 +1,121 @@
-# import context
-# from utils.network import SensorList
-# from utils.sensor import Sensor
-# from datetime import datetime, timedelta
-# import numpy as np
-# import pandas as pd
-# from pykrige.ok import OrdinaryKriging
-# from matplotlib import pyplot as plt
-# import gstools as gs
+import context
+import os
+import numpy as np
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+import gstools as gs
+from context import data_dir
+
+# ids, lat, lon, pm25 = np.loadtxt(os.path.join("..", "data", "pm25_obs.txt")).T
+
+df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
+lat, lon, pm25 = df["lat"], df["lon"], df["PM2.5"]
+###############################################################################
+# First we will estimate the variogram of our pm25erature data.
+# As the maximal bin distance we choose 8 degrees, which corresponds to a
+# chordal length of about 900 km.
+
+bins = gs.standard_bins((lat, lon), max_dist=np.deg2rad(8), latlon=True)
+bin_c, vario = gs.vario_estimate((lat, lon), pm25, bin_edges=bins, latlon=True)
 
 
-# from pykrige.kriging_tools import write_asc_grid
-# import pykrige.kriging_tools as kt
-# import matplotlib.pyplot as plt
-# import cartopy.crs as ccrs
-# from matplotlib.colors import LinearSegmentedColormap
-# from matplotlib.patches import Path, PathPatch
-# import cartopy.feature as cfeature
-# import matplotlib.colors
-# from context import data_dir
+model = gs.Spherical(latlon=True, rescale=gs.EARTH_RADIUS)
+model.fit_variogram(bin_c, vario, nugget=False)
+ax = model.plot("vario_yadrenko", x_max=bin_c[-1])
+ax.scatter(bin_c, vario)
+ax.set_xlabel("great circle distance / radians")
+ax.set_ylabel("semi-variogram")
+fig = ax.get_figure()
+# fig.savefig(os.path.join("..", "results", "variogram.pdf"), dpi=300)
+print(model)
 
-# p = SensorList()  # Initialized 11,220 sensors!
-# # If `sensor_filter` is set to 'column' then we must also provide a value for `column`
-# df = p.to_dataframe(sensor_filter='column',
-#                     channel='parent',
-#                     column='10min_avg')  # See Channel docs for all column options
-# print(len(df))
-
-
-# # wesn = [-137.9,-64.9,24.4,73.3]
-# wesn = [-124.8,-117.3,43.6,51.3]
-
-# df = df.loc[(df['lat'] > wesn[2]) & (df['lat'] < wesn[3]) & (df['lon'] > wesn[0]) & (df['lon'] < wesn[1])]
-# df = df[df['location_type'] == 'outside']
-# df_IDS = pd.DataFrame({'lat': df['lat'].values,'lon': df['lon'].values, 'ids': df.index.values })
-# df_IDS.to_csv(str(data_dir)+'/sensorIDs.csv', encoding='utf-8', index=False)
+###############################################################################
+# As we see, we have a rather large correlation length of ca. 600 km.
+#
+# Now we want to interpolate the data using Universal and Regression kriging
+# in order to compare them.
+# We will use a north-south drift by assuming a linear correlation
+# of pm25erature with latitude.
 
 
-# # np.savetxt(str(data_dir) + '/sensorIDs.txt', ids, fmt='%d')
-# # np.savetxt(str(data_dir) + '/sensorLATS.txt', lats, fmt='%d')
-# # np.savetxt(str(data_dir) + '/sensorLONS.txt', lons, fmt='%d')
-
-# df = df.loc[(df['10min_avg'] < 100) & (df['10min_avg'] > 0)]
-# df = df[df['lat'].notna()]
-# df = df[df['lon'].notna()]
-# df = df[df['temp_c'].notna()]
+def north_south_drift(lat, lon):
+    """North south trend depending linearly on latitude."""
+    return lat
 
 
-# df_filtered = df[df['location_type'] == 'outside']
+uk = gs.krige.Universal(
+    model=model,
+    cond_pos=(lat, lon),
+    cond_val=pm25,
+    # drift_functions=north_south_drift,
+)
 
-# lats = df_filtered['lat'].values
-# lons = df_filtered['lon'].values
-# data = df_filtered['temp_c'].values
+# fit linear regression model for pm25erature depending on latitude
+regress = stats.linregress(lat, pm25)
+trend = lambda x, y: regress.intercept + regress.slope * x
 
-# grid_space = 0.1
-# grid_lon = np.arange(wesn[0],wesn[1], grid_space)
-# grid_lat = np.arange(wesn[2],wesn[3], grid_space)
+dk = gs.krige.Detrended(
+    model=model,
+    cond_pos=(lat, lon),
+    cond_val=pm25,
+    trend=trend,
+)
 
-# OK = OrdinaryKriging(lons, lats, data, variogram_model='gaussian', verbose=True, enable_plotting=False,nlags=20)
-# z1, ss1 = OK.execute('grid', grid_lon, grid_lat)
+###############################################################################
+# Now we generate the kriging field, by defining a lat-lon grid that covers
+# the whole of Germany. The :any:`Krige` class provides the option to only
+# krige the mean field, so one can have a glimpse at the estimated drift.
 
-# xintrp, yintrp = np.meshgrid(grid_lon, grid_lat)
+g_lat = np.arange(lat.min(), lat.max(), 1.0)
+g_lon = np.arange(lon.min(), lon.max(), 1.0)
 
+fld_uk = uk((g_lat, g_lon), mesh_type="structured", return_var=False)
+mean = uk((g_lat, g_lon), mesh_type="structured", only_mean=True)
+fld_dk = dk((g_lat, g_lon), mesh_type="structured", return_var=False)
 
-# ## bring in state/prov boundaries
-# states_provinces = cfeature.NaturalEarthFeature(
-#     category="cultural",
-#     name="admin_1_states_provinces_lines",
-#     scale="50m",
-#     facecolor="none",
-# )
+###############################################################################
+# And that's it. Now let's have a look at the generated field and the input
+# data along with the estimated mean:
 
-# # create fig and axes using intended projection
-# fig = plt.figure(figsize=(12,10))
-# # fig.suptitle(f"Wildfire Conditions", fontsize=22, x=0.48, y = 0.92, weight='bold')
-# Cnorm = matplotlib.colors.Normalize(vmin=np.min(z1).astype(int), vmax=np.max(z1).astype(int) + 1)
-# # Cnorm = matplotlib.colors.Normalize(vmin=np.min(data).astype(int), vmax=np.max(data).astype(int) + 1)
-# # levels = np.arange(np.min(z1).astype(int),np.max(z1).astype(int) + 1, 0.1)
-# data_crs = ccrs.PlateCarree()
-# ax = fig.add_subplot(1, 1, 1, projection=data_crs)
-# CS = ax.contourf(grid_lon, grid_lat, z1, norm=Cnorm, cmap ="jet", levels=levels)
-# ax.add_feature(states_provinces, linewidth=0.5, edgecolor="black", zorder=10)
-# ax.add_feature(cfeature.BORDERS, zorder=10,  lw = 0.7)
-# ax.add_feature(cfeature.COASTLINE, zorder=10, lw = 0.7)
-# fig.tight_layout()
-# CS = ax.scatter(lons,lats,c = data,norm=Cnorm, cmap ="jet")
-# # fig.subplots_adjust(right=0.91)
-# # cbar_ax = fig.add_axes([0.92, 0.09, 0.016, 0.38])  # (left, bottom, right, top)
-# cbar = fig.colorbar(CS)
-# # # draw parallels.
-# # parallels = np.arange(21.5,26.0,0.5)
-# # m.drawparallels(parallels,labels=[1,0,0,0],fontsize=14, linewidth=0.0) #Draw the latitude labels on the map
+levels = np.linspace(0, 50, 51)
+fig, ax = plt.subplots(1, 3, figsize=[10, 5], sharey=True)
+sca = ax[0].scatter(lon, lat, c=pm25, vmin=5, vmax=23, cmap="coolwarm")
+co1 = ax[1].contourf(g_lon, g_lat, fld_uk, levels, cmap="coolwarm")
+co2 = ax[2].contourf(g_lon, g_lat, fld_dk, levels, cmap="coolwarm")
 
-# # # draw meridians
-# # meridians = np.arange(119.5,122.5,0.5)
-# # m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=14, linewidth=0.0)
+# pdf anti-alias
+ax[1].contour(g_lon, g_lat, fld_uk, levels, cmap="coolwarm", zorder=-10)
+ax[2].contour(g_lon, g_lat, fld_dk, levels, cmap="coolwarm", zorder=-10)
 
-# # # grid definition for output field
-# # gridx = np.arange(0.0, 5.5, 0.1)
-# # gridy = np.arange(0.0, 6.5, 0.1)
-# # # a GSTools based covariance model
-# # cov_model = gs.Gaussian(dim=2, len_scale=4, anis=0.2, angles=-0.5, var=0.5, nugget=0.1)
-# # # ordinary kriging with pykrige
-# # OK1 = OrdinaryKriging(data[:, 0], data[:, 1], data[:, 2], cov_model)
-# # z1, ss1 = OK1.execute("grid", gridx, gridy)
-# # plt.imshow(z1, origin="lower")
-# # plt.show()
+# [ax[i].plot(border[:, 0], border[:, 1], color="k") for i in range(3)]
+# [ax[i].set_xlim([5, 16]) for i in range(3)]
+# [ax[i].set_xlabel("Longitude / °") for i in range(3)]
+# ax[0].set_ylabel("Latitude / °")
+
+ax[0].set_title("pm25erature observations at 2m\nfrom DWD (2020-06-09 12:00)")
+ax[1].set_title("Universal Kriging\nwith North-South drift")
+ax[2].set_title("Regression Kriging\nwith North-South trend")
+
+fmt = dict(orientation="horizontal", shrink=0.5, fraction=0.1, pad=0.2)
+fig.colorbar(co2, ax=ax, **fmt).set_label("T / °C")
+# fig.savefig(os.path.join("..", "results", "kriging.pdf"), dpi=300)
+
+###############################################################################
+# To get a better impression of the estimated north-south drift and trend,
+# we'll take a look at a cross-section at a longitude of 10 degree:
+
+# fig, ax = plt.subplots()
+# label = "latitude-pm25erature scatter"
+# reg_trend = trend(g_lat, g_lon)
+# ax.scatter(lat, pm25, c="silver", alpha=1.0, edgecolors="none", label=label)
+# ax.plot(g_lat, fld_uk[:, 20], c="C0", label="Universal Kriging: pm25erature (10° lon)")
+# ax.plot(g_lat, mean[:, 20], "--", c="C0", label="North-South drift: Universal Kriging")
+# ax.plot(g_lat, fld_dk[:, 20], c="C1", label="Regression Kriging: pm25erature (10° lon)")
+# ax.plot(g_lat, reg_trend, "--", c="C1", label="North-South trend: Regression Kriging")
+# ax.set_ylim(7)
+# ax.set_xlabel("Latitude / °")
+# ax.set_ylabel("T / °C")
+# ax.set_title("North-South cross-section")
+# ax.legend()
+# fig.savefig(os.path.join("..", "results", "trend.pdf"), dpi=300)

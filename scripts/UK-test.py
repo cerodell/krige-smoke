@@ -76,14 +76,6 @@ gpm25.head()
 
 # %%
 
-# gpm25_poly = gpd.read_file(str(data_dir) + "/obs/outer_bounds")
-# gpm25_poly_buff = gpm25_poly.buffer(-80_000)
-# gpm25_buff = gpd.GeoDataFrame(
-#     {"geometry": gpd.GeoSeries(gpm25_poly_buff)}, crs=gpm25.crs
-# )
-# gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
-
-gpm25_verif = gpm25
 
 gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
 gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
@@ -95,65 +87,49 @@ grid_ds = salem.Grid(
     x0y0=(gpm25.bounds.minx.min(), gpm25.bounds.miny.min()),
     proj="epsg:3347",
     pixel_ref="corner",
-).to_dataset()
+)
 
-# era_ds = grid_ds.salem.transform(era_ds)
-dem = grid_ds.salem.transform(dem_ds)
+krig_ds = grid_ds.to_dataset()
+# era_ds = krig_ds.salem.transform(era_ds)
+dem = krig_ds.salem.transform(dem_ds)
 dem["data"] = xr.where(dem.data < 0, 0, dem.data)
 
-# Angle = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
+
+startTime = datetime.now()
+krig = OrdinaryKriging(
+    x=gpm25["Easting"],
+    y=gpm25["Northing"],
+    z=gpm25["PM2.5"],
+    variogram_model=variogram_model,
+    nlags=nlags,
+    # external_drift=dem.data.values,
+)
+print(f"UK build time {datetime.now() - startTime}")
+
+startTime = datetime.now()
+z, ss = krig.execute("grid", gridx, gridy)
+print(f"UK execution time {datetime.now() - startTime}")
+UK_pm25 = np.where(z < 0, 0, z)
 
 
-list_ds, random_ids_list = [], []
-for i in range(0, 1):
-    loopTime = datetime.now()
+krig_ds.to_netcdf(
+    str(data_dir) + f"/test.nc",
+    mode="w",
+)
 
-    ds = grid_ds
-    gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
-    random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
-    random_ids = random_sample.id.values
-    gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
-    print(f"Random Sample index 0 {random_ids[0]}")
+krig_ds = salem.open_xr_dataset(str(data_dir) + f"/test.nc")
 
-    krig = UniversalKriging(
-        x=gpm25_krig["Easting"],
-        y=gpm25_krig["Northing"],
-        z=gpm25_krig["PM2.5"],
-        variogram_model=variogram_model,
-        nlags=nlags,
-        external_drift=dem.data.values,
-    )
-
-    z, ss = krig.execute("grid", gridx, gridy)
-    OK_pm25 = np.where(z < 0, 0, z)
-
-    ds.assign_coords({"test": i})
-    ds.assign_coords({"ids": np.arange(len(random_ids))})
-    ds["pm25"] = (("y", "x"), OK_pm25)
-    random_ids_list.append(random_ids.astype(str))
-
-    list_ds.append(ds)
-    print(f"Loop {i} time {datetime.now() - loopTime}")
+gridx = np.arange(gpm25.lon.min(), gpm25.lon.max(), 0.1)
+gridy = np.arange(gpm25.lat.min(), gpm25.lat.max(), 0.1)
 
 
-final_ds = xr.concat(list_ds, dim="test")
-final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
-final_ds["random_sample"] = final_ds["random_sample"].astype(str)
+krig_dss = salem.Grid(
+    nxny=(len(gridx), len(gridy)),
+    dxdy=(0.1, 0.1),
+    x0y0=(gpm25.lon.min(), gpm25.lat.min()),
+    proj="epsg:4326",
+    pixel_ref="corner",
+).to_dataset()
 
 
-# def compressor(ds):
-#     """
-#     this function compresses datasets
-#     """
-#     comp = dict(zlib=True, complevel=9)
-#     encoding = {var: comp for var in ds.data_vars}
-#     return ds, encoding
-
-
-# ds_concat, encoding = compressor(final_ds)
-# final_ds.to_netcdf(
-#     str(data_dir)
-#     + f"/UK-dem-1km{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
-#     encoding=encoding,
-#     mode="w",
-# )
+test = krig_dss.salem.transform(krig_ds)

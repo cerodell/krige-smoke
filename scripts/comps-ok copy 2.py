@@ -19,6 +19,8 @@ import pandas as pd
 import xarray as xr
 import geopandas as gpd
 from pykrige.ok import OrdinaryKriging
+from pykrige.uk import UniversalKriging
+
 
 import plotly.express as px
 from datetime import datetime
@@ -63,6 +65,12 @@ krig_ds = salem.Grid(
 ## print dataset
 krig_ds
 
+
+era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
+era_ds["degrees"] = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
+
+era_ds = krig_ds.salem.transform(era_ds)
+
 # %% [markdown]
 # ##  Setup OK
 # %%
@@ -70,7 +78,7 @@ nlags = 15
 variogram_model = "spherical"
 
 startTime = datetime.now()
-krig = OrdinaryKriging(
+krig_ok = OrdinaryKriging(
     x=gpm25["Easting"],
     y=gpm25["Northing"],
     z=gpm25["PM2.5"],
@@ -81,86 +89,47 @@ krig = OrdinaryKriging(
 print(f"OK build time {datetime.now() - startTime}")
 
 
-# %% [markdown]
-# ### Variogram
-# #### variogram overview
-# - Graphical representation of spatial autocorrelation.
-# - Shows a fundamental principle of geography: closer things are more alike than things farther apart
-# - Its created by calculating the difference squared between the values of the paired locations
-#   - paired locations are binned by the distance apart
-# - An empirical model is fitted to the binned (paired locations) to describe the likeness of data at a distance.
-# - Type of empirical models
-#    - Circular
-#    - Spherical
-#    - Exponential
-#    - Gaussian
-#    - Linear
-#  - The fitted model is applied in the interpolation process by forming (kriging) weights for the predicted areas.
+startTime = datetime.now()
+krig_uk = UniversalKriging(
+    x=gpm25["Easting"],
+    y=gpm25["Northing"],
+    z=gpm25["PM2.5"],
+    drift_terms="regional_linear",
+    # variogram_model=variogram_model,
+    nlags=nlags,
+    # external_drift=era_ds["degrees"].values,
+)
+print(f"UK build time {datetime.now() - startTime}")
 
-# #### variogram parameters
-# - Three parameters that define a variogram..
-#     - sill: the total variance where the empirical model levels off,
-#       -  is the sum of the nugget plus the sills of each nested structure.
-#     - (effective) range: The distance after which data are no longer correlated.
-#       -  About the distance where the variogram levels off to the sill.
-#     - nugget: Related to the amount of short range variability in the data.
-#        - Choose a value for the best fit with the first few empirical variogram points.
-#        -  A nugget that's large relative to the sill is problematic and could indicate too much noise and not enough spatial correlation.
+startTime = datetime.now()
+krig_uk2 = UniversalKriging(
+    x=gpm25["Easting"],
+    y=gpm25["Northing"],
+    z=gpm25["PM2.5"],
+    drift_terms="regional_linear",
+    variogram_model=variogram_model,
+    nlags=nlags,
+    # external_drift=era_ds["degrees"].values,
+)
+print(f"UK build time {datetime.now() - startTime}")
 
-
-#### variogram statistics
-# A good model should result in
-#   - Q1 close to zero
-
-#   - Q2 close to one
-#   - cR as small as possible.
-# TODO define above stats variables.
-
-# %% [markdown]
-# #### Our variogram parameters
-# PyKrige will optimize most parameters based on user defined empirical model and the number of bins.
-# - I tested several empirical models and bin sizes and found (for this case study) that a spherical model with 15 bins was optimal based on the output statics.
-# - NOTE the literature supports spherical for geospatial interpolation applications over other methods.
-# %%
-plotvariogram(krig)
-
-
-# %% [markdown]
-# ### Execute OK
-# Interpolate data to our grid using OK.
 # %%
 startTime = datetime.now()
-z, ss = krig.execute("grid", gridx, gridy)
+z, ss = krig_ok.execute("grid", gridx, gridy)
 print(f"OK execution time {datetime.now() - startTime}")
-OK_pm25 = np.where(z < 0, 0, z)
-
-# krig_ds["OK_pm25"] = (("y", "x"), OK_pm25)
-
-# %% [markdown]
-# ### Plot OK Modelled PM2.5
-# Convert data to polygons to be plot-able on a slippy mapbox. The conversion is not necessary, just fun to plot on a slippy map :)
-
-# %%
-polygons, values = pixel2poly(gridx, gridy, OK_pm25, resolution)
-pm25_model = gpd.GeoDataFrame(
-    {"Modelled PM2.5": values}, geometry=polygons, crs="EPSG:3347"
-).to_crs("EPSG:4326")
-
-fig = px.choropleth_mapbox(
-    pm25_model,
-    geojson=pm25_model.geometry,
-    locations=pm25_model.index,
-    color="Modelled PM2.5",
-    color_continuous_scale="jet",
-    center={"lat": 50.0, "lon": -110.0},
-    zoom=2.5,
-    mapbox_style="carto-positron",
-    opacity=0.8,
-)
-fig.update_layout(margin=dict(l=0, r=0, t=30, b=10))
-fig.update_traces(marker_line_width=0)
-fig.show()
+OK_pm25_ok = np.where(z < 0, 0, z)
 
 
-# %% [markdown]
-# ### Onto Universal Kriging...
+startTime = datetime.now()
+z, ss = krig_uk.execute("grid", gridx, gridy)
+print(f"OK execution time {datetime.now() - startTime}")
+OK_pm25_uk = np.where(z < 0, 0, z)
+
+
+startTime = datetime.now()
+z, ss = krig_uk2.execute("grid", gridx, gridy)
+print(f"OK execution time {datetime.now() - startTime}")
+OK_pm25_uk2 = np.where(z < 0, 0, z)
+
+krig_ds["OK_pm25"] = (("y", "x"), OK_pm25_uk2 - OK_pm25_uk)
+krig_ds["OK_pm25"].plot()
