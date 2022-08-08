@@ -54,7 +54,7 @@ uk = gs.krige.Universal(
 )
 print(f"UK build time {datetime.now() - startTime}")
 
-# fit linear regression model for pm25erature depending on latitude
+# fit linear regression model for pm25 depending on latitude
 regress = stats.linregress(lat, pm25)
 trend = lambda x, y: regress.intercept + regress.slope * x
 

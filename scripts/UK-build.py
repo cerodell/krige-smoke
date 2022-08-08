@@ -7,16 +7,9 @@ from datetime import datetime
 
 
 import geopandas as gpd
-import plotly.express as px
 import plotly.graph_objects as go
-from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
-from shapely.geometry import Polygon
-import shapely
-from sklearn.neighbors import KDTree
 
-import matplotlib.pyplot as plt
-from utils.utils import pixel2poly
 
 from context import data_dir, img_dir
 import time
@@ -29,9 +22,8 @@ nlags = 15
 variogram_model = "spherical"
 frac = 0.1
 
-wesn = [-160.0, -52.0, 32.0, 70.0]  ## BSC Domain
-# wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
-resolution = 36000  # cell size in meters
+wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
+resolution = 10_000  # cell size in meters
 
 era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
 
@@ -76,60 +68,91 @@ gpm25.head()
 
 # %%
 
-# gpm25_poly = gpd.read_file(str(data_dir) + "/obs/outer_bounds")
-# gpm25_poly_buff = gpm25_poly.buffer(-80_000)
-# gpm25_buff = gpd.GeoDataFrame(
-#     {"geometry": gpd.GeoSeries(gpm25_poly_buff)}, crs=gpm25.crs
-# )
-# gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
+## make grid based on dataset bounds and resolution
+gridx = np.arange(
+    gpm25.bounds.minx.min() - resolution,
+    gpm25.bounds.maxx.max() + resolution,
+    resolution,
+)
+gridy = np.arange(
+    gpm25.bounds.miny.min() - resolution,
+    gpm25.bounds.maxy.max() + resolution,
+    resolution,
+)
 
-gpm25_verif = gpm25
 
-gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
-gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
+# gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
+# gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
 
 
-grid_ds = salem.Grid(
+## use salem to create a dataset with the grid.
+krig_ds = salem.Grid(
     nxny=(len(gridx), len(gridy)),
     dxdy=(resolution, resolution),
     x0y0=(gpm25.bounds.minx.min(), gpm25.bounds.miny.min()),
     proj="epsg:3347",
     pixel_ref="corner",
 ).to_dataset()
-
-# era_ds = grid_ds.salem.transform(era_ds)
-dem = grid_ds.salem.transform(dem_ds)
-dem["data"] = xr.where(dem.data < 0, 0, dem.data)
-
-# Angle = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
+## print dataset
+krig_ds
 
 
+def dem_points(df):
+    y = xr.DataArray(
+        np.array(df["lat"]),
+        dims="ids",
+        coords=dict(ids=df.id.values),
+    )
+    x = xr.DataArray(
+        np.array(df["lon"]),
+        dims="ids",
+        coords=dict(ids=df.id.values),
+    )
+    dem_points = dem_ds.data.interp(lon=x, lat=y, method="linear")
+    df["dem"] = dem_points.data[0, :]
+    return df["dem"].values
+
+
+# era_ds_T = grid_ds.salem.transform(era_ds)
+dem_ds_T = krig_ds.salem.transform(dem_ds)
+dem_array = dem_ds_T.data.values[0, :, :].T
+
+
+gpm25_verif = gpm25
 list_ds, random_ids_list = [], []
-for i in range(0, 1):
+for i in range(0, 10):
     loopTime = datetime.now()
 
-    ds = grid_ds
+    ds = krig_ds
     gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
     random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
     random_ids = random_sample.id.values
     gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
     print(f"Random Sample index 0 {random_ids[0]}")
-
+    dem = dem_points(gpm25_krig)
+    startTime = datetime.now()
     krig = UniversalKriging(
-        x=gpm25_krig["Easting"],
-        y=gpm25_krig["Northing"],
-        z=gpm25_krig["PM2.5"],
+        x=gpm25_krig["Easting"],  ## x location of aq monitors in lambert conformal
+        y=gpm25_krig["Northing"],  ## y location of aq monitors in lambert conformal
+        z=gpm25_krig["PM2.5"],  ## measured PM 2.5 concentrations at locations
+        drift_terms=["external_Z"],
         variogram_model=variogram_model,
         nlags=nlags,
-        external_drift=dem.data.values,
+        external_drift=dem_array,  ## 2d array of dem used for external drift
+        external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
+        external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
+        specified_drift=[dem],  ## elevation of aq monitors
     )
+    print(f"UK build time {datetime.now() - startTime}")
 
+    startTime = datetime.now()
     z, ss = krig.execute("grid", gridx, gridy)
-    OK_pm25 = np.where(z < 0, 0, z)
+    UK_pm25 = np.where(z < 0, 0, z)
+    print(f"UK execute time {datetime.now() - startTime}")
 
     ds.assign_coords({"test": i})
     ds.assign_coords({"ids": np.arange(len(random_ids))})
-    ds["pm25"] = (("y", "x"), OK_pm25)
+    ds["pm25"] = (("y", "x"), UK_pm25)
     random_ids_list.append(random_ids.astype(str))
 
     list_ds.append(ds)
@@ -141,19 +164,19 @@ final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
 final_ds["random_sample"] = final_ds["random_sample"].astype(str)
 
 
-# def compressor(ds):
-#     """
-#     this function compresses datasets
-#     """
-#     comp = dict(zlib=True, complevel=9)
-#     encoding = {var: comp for var in ds.data_vars}
-#     return ds, encoding
+def compressor(ds):
+    """
+    this function compresses datasets
+    """
+    comp = dict(zlib=True, complevel=9)
+    encoding = {var: comp for var in ds.data_vars}
+    return ds, encoding
 
 
-# ds_concat, encoding = compressor(final_ds)
-# final_ds.to_netcdf(
-#     str(data_dir)
-#     + f"/UK-dem-1km{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
-#     encoding=encoding,
-#     mode="w",
-# )
+ds_concat, encoding = compressor(final_ds)
+final_ds.to_netcdf(
+    str(data_dir)
+    + f"/UK-dem-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
+    encoding=encoding,
+    mode="w",
+)

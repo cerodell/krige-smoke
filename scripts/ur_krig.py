@@ -100,7 +100,7 @@ dk = gs.krige.Detrended(
     model=model,
     cond_pos=(lats, lons),
     cond_val=pm25,
-    # trend=trend,
+    trend=trend,
 )
 
 ###############################################################################
