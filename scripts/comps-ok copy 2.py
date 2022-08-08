@@ -18,9 +18,17 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import geopandas as gpd
+
+import gstools as gs
+from scipy import stats
+
 from pykrige.ok import OrdinaryKriging
 from pykrige.uk import UniversalKriging
 import pykrige
+import warnings
+
+warnings.filterwarnings("ignore", category=xr.SerializationWarning)
+
 
 print(pykrige.__version__)
 
@@ -43,6 +51,9 @@ gpm25 = gpd.GeoDataFrame(
 gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
 gpm25.head()
 
+gpm25 = gpm25.sort_values("Easting")
+gpm25 = gpm25[:30]
+
 
 # %% [markdown]
 # ### Create Grid
@@ -53,8 +64,21 @@ gpm25.head()
 resolution = 20_000  # grid cell size in meters
 
 ## make grid based on dataset bounds and resolution
-gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
-gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
+gridx = np.arange(
+    gpm25.bounds.minx.min() - resolution,
+    gpm25.bounds.maxx.max() + resolution,
+    resolution,
+)
+gridy = np.arange(
+    gpm25.bounds.miny.min() - resolution,
+    gpm25.bounds.maxy.max() + resolution,
+    resolution,
+)
+
+
+# gridx = np.arange(gpm25.bounds.minx.min(), gpm25.bounds.maxx.max(), resolution)
+# gridy = np.arange(gpm25.bounds.miny.min(), gpm25.bounds.maxy.max(), resolution)
+
 
 ## use salem to create a dataset with the grid.
 krig_ds = salem.Grid(
@@ -90,91 +114,100 @@ x = xr.DataArray(
 dem_points = dem_ds.data.interp(x=x, y=y, method="linear")
 gpm25["dem"] = dem_points.data[0, :]
 
+# gpm25["dem"]  = [         502, 502.66471084,          300, 377.81742284,
+#        161.29898892, 264.56173647, 277.4559591 , 300.39646812,
+#        291.71363401, 273.59962072]
+
 # %% [markdown]
 # ##  Setup OK
 # %%
 nlags = 15
 variogram_model = "spherical"
 
-startTime = datetime.now()
-krig_ok = OrdinaryKriging(
-    x=gpm25["Easting"],
-    y=gpm25["Northing"],
-    z=gpm25["PM2.5"],
-    variogram_model=variogram_model,
-    # enable_statistics=True,
-    nlags=nlags,
-)
-print(f"OK build time {datetime.now() - startTime}")
+# startTime = datetime.now()
+# krig_ok = OrdinaryKriging(
+#     x=gpm25["Easting"],
+#     y=gpm25["Northing"],
+#     z=gpm25["PM2.5"],
+#     variogram_model=variogram_model,
+#     # enable_statistics=True,
+#     nlags=nlags,
+#     verbose = True
+# )
+# print(f"OK build time {datetime.now() - startTime}")
 
 
-startTime = datetime.now()
-krig_uk_dem = UniversalKriging(
-    x=df["Easting"],  ## x location of aq monitors in lambert conformal
-    y=df["Northing"],  ## y location of aq monitors in lambert conformal
-    z=df["PM2.5"],  ## measured PM 2.5 concentrations at locations
-    drift_terms=["external_Z", "specified"],
-    external_drift=dem_ds.data.values[
-        0, :, :
-    ].T,  ## 2d array of dem used for external drift
-    external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
-    external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
-    specified_drift=df["dem"],  ## elevation of aq monitors
-)
-print(f"UK build time {datetime.now() - startTime}")
+# dem_array = dem_ds.data.values[0,:,:].T
 
 
-external_x2_index = np.amin(np.where(gridx >= xn)[0])
-external_x1_index = np.amax(np.where(gridx <= xn)[0])
-external_y2_index = np.amin(np.where(gridy >= yn)[0])
-external_y1_index = np.amax(np.where(gridy <= yn)[0])
+# external_drift.shape[1] != external_drift_x.shape[0]
+
+# dem_array.shape[1]
+# gridx.shape[0]
+
+# startTime = datetime.now()
+# krig_uk_dem = UniversalKriging(
+#     x=gpm25["Easting"],  ## x location of aq monitors in lambert conformal
+#     y=gpm25["Northing"],  ## y location of aq monitors in lambert conformal
+#     z=gpm25["PM2.5"],  ## measured PM 2.5 concentrations at locations
+#     drift_terms=["external_Z"],
+#     variogram_model=variogram_model,
+#     external_drift= dem_array,  ## 2d array of dem used for external drift
+#     external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
+#     external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
+#     specified_drift=gpm25["dem"].values,  ## elevation of aq monitors
+#     verbose = True
+# )
+# print(f"UK build time {datetime.now() - startTime}")
 
 
-def north_south_drift(y, x):
-    """North south trend depending linearly on latitude."""
-    return y
+# def north_south_drift(y, x):
+#     """North south trend depending linearly on latitude."""
+#     return y
 
 
-startTime = datetime.now()
-krig_uk = UniversalKriging(
-    x=gpm25["Easting"],
-    y=gpm25["Northing"],
-    z=gpm25["PM2.5"],
-    variogram_model=variogram_model,
-    nlags=nlags,
-    functional_drift=north_south_drift,
-)
-print(f"UK build time {datetime.now() - startTime}")
+# startTime = datetime.now()
+# krig_uk = UniversalKriging(
+#     x=gpm25["Easting"],
+#     y=gpm25["Northing"],
+#     z=gpm25["PM2.5"],
+#     variogram_model=variogram_model,
+#     nlags=nlags,
+#     functional_drift=north_south_drift,
+# )
+# print(f"UK build time {datetime.now() - startTime}")
 
-startTime = datetime.now()
-krig_uk2 = UniversalKriging(
-    x=gpm25["Easting"],
-    y=gpm25["Northing"],
-    z=gpm25["PM2.5"],
-    drift_terms="regional_linear",
-    variogram_model=variogram_model,
-    nlags=nlags,
-    # external_drift=era_ds["degrees"].values,
-)
-print(f"UK build time {datetime.now() - startTime}")
-
-# %%
-startTime = datetime.now()
-z, ss = krig_ok.execute("grid", gridx, gridy)
-print(f"OK execution time {datetime.now() - startTime}")
-OK_pm25_ok = np.where(z < 0, 0, z)
+regress = stats.linregress(gpm25["Northing"], gpm25["PM2.5"])
+trend = lambda x, y: regress.intercept + regress.slope * x
 
 
-startTime = datetime.now()
-z, ss = krig_uk.execute("grid", gridx, gridy)
-print(f"OK execution time {datetime.now() - startTime}")
-OK_pm25_uk = np.where(z < 0, 0, z)
+# startTime = datetime.now()
+# dk = gs.krige.Detrended(
+#     model=model,
+#     cond_pos=(gpm25['lat'], gpm25['lon']),
+#     cond_val=gpm25['PM2.5'],
+#     trend=trend,
+# )
+# print(f"RK build time {datetime.now() - startTime}")
 
 
-startTime = datetime.now()
-z, ss = krig_uk2.execute("grid", gridx, gridy)
-print(f"OK execution time {datetime.now() - startTime}")
-OK_pm25_uk2 = np.where(z < 0, 0, z)
+# # %%
+# startTime = datetime.now()
+# z, ss = krig_ok.execute("grid", gridx, gridy)
+# print(f"OK execution time {datetime.now() - startTime}")
+# OK_pm25_ok = np.where(z < 0, 0, z)
 
-krig_ds["OK_pm25"] = (("y", "x"), OK_pm25_uk - OK_pm25_ok)
-krig_ds["OK_pm25"].plot()
+
+# startTime = datetime.now()
+# z, ss = krig_uk_dem.execute("grid", gridx, gridy)
+# print(f"OK execution time {datetime.now() - startTime}")
+# OK_pm25_uk = np.where(z < 0, 0, z)
+
+
+# startTime = datetime.now()
+# z, ss = krig_uk2.execute("grid", gridx, gridy)
+# print(f"OK execution time {datetime.now() - startTime}")
+# OK_pm25_uk2 = np.where(z < 0, 0, z)
+
+# krig_ds["OK_pm25"] = (("y", "x"), OK_pm25_ok-OK_pm25_uk)
+# krig_ds["OK_pm25"].plot()
