@@ -20,15 +20,13 @@ start_time = time.time()
 
 nlags = 15
 variogram_model = "spherical"
-frac = 0.1
-
+frac = 0.50
+var = "AOD_550_GF_SM"
 wesn = [-129.0, -90.0, 40.0, 60.0]  ## Big Test Domain
 resolution = 10_000  # cell size in meters
 
-era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
+aod_aqua_ds = salem.open_xr_dataset(str(data_dir) + f"/MYD04.2021197.G10.nc")
 
-dem_ds = salem.open_xr_dataset(str(data_dir) + f"/elev.americas.5-min.nc")
-dem_ds["lon"] = dem_ds["lon"] - 360
 
 gov_ds = xr.open_dataset(str(data_dir) + f"/gov_aq.nc")
 gov_ds = gov_ds.sel(datetime="2021-07-16T22:00:00")
@@ -97,7 +95,7 @@ krig_ds = salem.Grid(
 krig_ds
 
 
-def dem_points(df):
+def era_points(df):
     y = xr.DataArray(
         np.array(df["lat"]),
         dims="ids",
@@ -108,14 +106,18 @@ def dem_points(df):
         dims="ids",
         coords=dict(ids=df.id.values),
     )
-    dem_points = dem_ds.data.interp(lon=x, lat=y, method="linear")
-    df["dem"] = dem_points.data[0, :]
-    return df["dem"].values
+    var_points = aod_aqua_ds[var].interp(Longitude=x, Latitude=y, method="linear")
+    # print(var_points)
+    if len(df.index) == len(var_points.values):
+        var_points = var_points.values
+    else:
+        raise ValueError("Lenghts dont match")
+    return var_points
 
 
-# era_ds_T = grid_ds.salem.transform(era_ds)
-dem_ds_T = krig_ds.salem.transform(dem_ds)
-dem_array = dem_ds_T.data.values[0, :, :].T
+# era_ds_T = krig_ds.salem.transform(era_ds)
+aod_aqua_ds_T = krig_ds.salem.transform(aod_aqua_ds)
+var_array = aod_aqua_ds_T[var].values
 
 
 gpm25_verif = gpm25
@@ -127,26 +129,32 @@ for i in range(0, 10):
     gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
     random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
     random_ids = random_sample.id.values
-    gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
+    gpm25_krig = gpm25.loc[~gpm25.id.isin(random_sample.id)]
     print(f"Random Sample index 0 {random_ids[0]}")
-    dem = dem_points(gpm25_krig)
+    var_points = era_points(gpm25_krig)
     startTime = datetime.now()
     krig = UniversalKriging(
-        x=gpm25_krig["Easting"],  ## x location of aq monitors in lambert conformal
-        y=gpm25_krig["Northing"],  ## y location of aq monitors in lambert conformal
-        z=gpm25_krig["PM2.5"],  ## measured PM 2.5 concentrations at locations
-        drift_terms=["external_Z"],
+        x=gpm25_krig[
+            "Easting"
+        ].values,  ## x location of aq monitors in lambert conformal
+        y=gpm25_krig[
+            "Northing"
+        ].values,  ## y location of aq monitors in lambert conformal
+        z=gpm25_krig["PM2.5"].values,  ## measured PM 2.5 concentrations at locations
+        # drift_terms=["external_Z", "specified"],
+        drift_terms=["specified"],
         variogram_model=variogram_model,
         nlags=nlags,
-        external_drift=dem_array,  ## 2d array of dem used for external drift
-        external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
-        external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
-        specified_drift=[dem],  ## elevation of aq monitors
+        # external_drift=var_array,  ## 2d array of dem used for external drift
+        # external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
+        # external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
+        specified_drift=[var_points],  ## elevation of aq monitors
     )
     print(f"UK build time {datetime.now() - startTime}")
 
     startTime = datetime.now()
-    z, ss = krig.execute("grid", gridx, gridy)
+    z, ss = krig.execute("grid", gridx, gridy, specified_drift_arrays=[var_array])
+    # z, ss = krig.execute("grid", gridx, gridy)
     UK_pm25 = np.where(z < 0, 0, z)
     print(f"UK execute time {datetime.now() - startTime}")
 
@@ -176,7 +184,7 @@ def compressor(ds):
 ds_concat, encoding = compressor(final_ds)
 final_ds.to_netcdf(
     str(data_dir)
-    + f"/UK-dem-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
+    + f"/UK-aod-sp-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
     encoding=encoding,
     mode="w",
 )

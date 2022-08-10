@@ -105,7 +105,7 @@ for i in range(0, 10):
     random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
     random_ids = random_sample.id.values
     # print(random_ids)
-    gpm25_krig = gpm25[~gpm25.id.isin(random_sample.id)]
+    gpm25_krig = gpm25.loc[~gpm25.id.isin(random_sample.id)]
     print(f"Random Sample index 0 {random_ids[0]}")
 
     krig = OrdinaryKriging(

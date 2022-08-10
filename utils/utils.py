@@ -38,7 +38,10 @@ def plotvariogram(krig):
         "k-",
     )
     ax.grid(True, linestyle="--", zorder=1, lw=0.5)
-    fig_title = f"Coordinates type: {(krig.coordinates_type).title()}" + "\n"
+    try:
+        fig_title = f"Coordinates type: {(krig.coordinates_type).title()}" + "\n"
+    except:
+        fig_title = ""
     if krig.variogram_model == "linear":
         fig_title += "Using '%s' Variogram Model" % "linear" + "\n"
         fig_title += f"Slope: {krig.variogram_model_parameters[0]}" + "\n"

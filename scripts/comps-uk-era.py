@@ -61,19 +61,48 @@ krig_ds
 
 # %% [markdown]
 # ### ERA5 Data
-# Lets open era5 land dataset on the datetime of interest and transform the data to be on our grid for interpolation
+# Lets open era5 land dataset on the datetime of interest
 #
 # %%
 era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
-era_ds["degrees"] = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
-
-era_ds = krig_ds.salem.transform(era_ds)
+era_ds["dir"] = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
 
 # %% [markdown]
 # #### Plot ERA5
 
 # %%
-era_ds["degrees"].plot()
+era_ds["dir"].plot()
+
+
+# %% [markdown]
+# ## Set up spesfied dirft
+# with the era data we'll get wind direction at every aq station location
+
+# %%
+
+y = xr.DataArray(
+    np.array(df["lat"]),
+    dims="ids",
+    coords=dict(ids=df.id.values),
+)
+x = xr.DataArray(
+    np.array(df["lon"]),
+    dims="ids",
+    coords=dict(ids=df.id.values),
+)
+var_points = era_ds["dir"].interp(longitude=x, latitude=y, method="linear")
+# print(var_points)
+if len(df.index) == len(var_points.values):
+    var_points = var_points.values
+else:
+    raise ValueError("Lenghts dont match")
+
+
+# %% [markdown]
+# ### Transform ERA5 Data
+# Now we will transform the era data to be on the grid we are interpolationg too. This is feed in as a specified drift array when exceuting the interpolation.
+era_ds_T = krig_ds.salem.transform(era_ds)
+var_array = era_ds_T["dir"].values
 
 
 # %% [markdown]
@@ -83,30 +112,33 @@ nlags = 15
 variogram_model = "spherical"
 
 
-def north_south_drift(y, x):
-    """North south trend depending linearly on latitude."""
-    return y
-
-
 startTime = datetime.now()
 krig = UniversalKriging(
-    x=gpm25["Easting"],
-    y=gpm25["Northing"],
-    z=gpm25["PM2.5"],
-    # drift_terms="external_Z",
+    x=gpm25["Easting"],  ## x location of aq monitors in lambert conformal
+    y=gpm25["Northing"],  ## y location of aq monitors in lambert conformal
+    z=gpm25["PM2.5"],  ## measured PM 2.5 concentrations at locations
+    drift_terms=["specified"],
     variogram_model=variogram_model,
     nlags=nlags,
-    functional_drift=north_south_drift,
+    specified_drift=[var_points],  ## wind direction at aq monitors
 )
 print(f"UK build time {datetime.now() - startTime}")
+
+# %% [markdown]
+# #### Our variogram parameters
+# PyKrige will optimize most parameters based on user defined empirical model and the number of bins.
+# - I tested several empirical models and bin sizes and found (for this case study) that a spherical model with 15 bins was optimal based on the output statics.
+# - NOTE the literature supports spherical for geospatial interpolation applications over other methods.
+# %%
+plotvariogram(krig)
 
 
 # %% [markdown]
 # ### Execute UK
-# Interpolate data to our grid using UK.
+# Interpolate data to our grid using UK with specified drift. Where the specified drift is the linear correlation of wind direction to pm2.5 at all locations and on the interploated grid for kriging.
 # %%
 startTime = datetime.now()
-z, ss = krig.execute("grid", gridx, gridy)
+z, ss = krig.execute("grid", gridx, gridy, specified_drift_arrays=[var_array])
 print(f"UK execution time {datetime.now() - startTime}")
 UK_pm25 = np.where(z < 0, 0, z)
 

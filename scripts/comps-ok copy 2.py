@@ -55,7 +55,7 @@ gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
 gpm25.head()
 
 # gpm25 = gpm25.sort_values("Easting")
-gpm25 = gpm25[:30]
+# gpm25 = gpm25[:30]
 
 
 # %% [markdown]
@@ -98,36 +98,40 @@ krig_ds = salem.Grid(
 krig_ds
 
 
-era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
+# aod_terra_ds = salem.open_xr_dataset(str(data_dir) + f"/MOD04.2021197.G10.nc")
+# aod_terra_ds = krig_ds.salem.transform(aod_terra_ds)
+
+aod_aqua_ds = salem.open_xr_dataset(str(data_dir) + f"/MYD04.2021197.G10.nc")
+aod_aqua_ds = krig_ds.salem.transform(aod_aqua_ds)
+# era_ds = salem.open_xr_dataset(str(data_dir) + f"/era5-20120716T2200.nc")
 # era_ds["degrees"] = np.arctan2(era_ds.v10, era_ds.u10) * (180 / np.pi)
 
-dem_ds = salem.open_xr_dataset(str(data_dir) + f"/elev.americas.5-min.nc")
-dem_ds["lon"] = dem_ds["lon"] - 360
+# dem_ds = salem.open_xr_dataset(str(data_dir) + f"/elev.americas.5-min.nc")
+# dem_ds["lon"] = dem_ds["lon"] - 360
 
 # dem_ds = krig_ds.salem.transform(dem_ds)
 # era_ds = krig_ds.salem.transform(era_ds)
 
 
-y = xr.DataArray(
-    np.array(gpm25["lat"]),
-    dims="ids",
-    coords=dict(ids=gpm25.id.values),
-)
-x = xr.DataArray(
-    np.array(gpm25["lon"]),
-    dims="ids",
-    coords=dict(ids=gpm25.id.values),
-)
-dem_points = dem_ds.data.interp(lon=x, lat=y, method="linear")
-gpm25["dem"] = dem_points.data[0, :]
+# y = xr.DataArray(
+#     np.array(gpm25["lat"]),
+#     dims="ids",
+#     coords=dict(ids=gpm25.id.values),
+# )
+# x = xr.DataArray(
+#     np.array(gpm25["lon"]),
+#     dims="ids",
+#     coords=dict(ids=gpm25.id.values),
+# )
+# dem_points = dem_ds.data.interp(lon=x, lat=y, method="linear")
+# gpm25["dem"] = dem_points.data[0, :]
 
-era_points = era_ds.interp(longitude=x, latitude=y, method="linear")
-gpm25["u10"] = era_points.u10[0, :]
-gpm25["v10"] = era_points.v10[0, :]
+# era_points = era_ds.interp(longitude=x, latitude=y, method="linear")
+# gpm25["u10"] = era_points.u10[0, :]
+# gpm25["v10"] = era_points.v10[0, :]
 
 
-dem_ds = krig_ds.salem.transform(dem_ds)
-era_ds = krig_ds.salem.transform(era_ds)
+# era_ds = krig_ds.salem.transform(era_ds)
 # gpm25["dem"]  = [         502, 502.66471084,          300, 377.81742284,
 #        161.29898892, 264.56173647, 277.4559591 , 300.39646812,
 #        291.71363401, 273.59962072]
@@ -150,7 +154,7 @@ krig_ok = OrdinaryKriging(
 )
 print(f"OK build time {datetime.now() - startTime}")
 
-
+plotvariogram(krig_ok)
 # %% [markdown]
 # ##  Setup UK
 # UK with specified drift
@@ -166,11 +170,30 @@ dem_array.shape[1]
 gridx.shape[0]
 
 startTime = datetime.now()
-krig_uk_dem = UniversalKriging(
+krig_uk_sp_dem = UniversalKriging(
     x=gpm25["Easting"],  ## x location of aq monitors in lambert conformal
     y=gpm25["Northing"],  ## y location of aq monitors in lambert conformal
     z=gpm25["PM2.5"],  ## measured PM 2.5 concentrations at locations
-    # drift_terms=["external_Z"],
+    drift_terms=["specified"],
+    # drift_terms=["external_Z", "specified"],
+    variogram_model=variogram_model,
+    # external_drift=dem_array,  ## 2d array of dem used for external drift
+    # external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
+    # external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
+    specified_drift=[gpm25["dem"].values],  ## elevation of aq monitors
+    nlags=nlags,
+    verbose=True,
+)
+print(f"UK build time {datetime.now() - startTime}")
+
+plotvariogram(krig_uk_sp_dem)
+
+
+krig_uk_ex_dem = UniversalKriging(
+    x=gpm25["Easting"],  ## x location of aq monitors in lambert conformal
+    y=gpm25["Northing"],  ## y location of aq monitors in lambert conformal
+    z=gpm25["PM2.5"],  ## measured PM 2.5 concentrations at locations
+    # drift_terms=["specified"],
     drift_terms=["external_Z", "specified"],
     variogram_model=variogram_model,
     external_drift=dem_array,  ## 2d array of dem used for external drift
@@ -178,9 +201,11 @@ krig_uk_dem = UniversalKriging(
     external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
     specified_drift=[gpm25["dem"].values],  ## elevation of aq monitors
     verbose=True,
+    nlags=nlags,
 )
 print(f"UK build time {datetime.now() - startTime}")
 
+plotvariogram(krig_uk_ex_dem)
 
 # def north_south_drift(y, x):
 #     """North south trend depending linearly on latitude."""
@@ -198,20 +223,20 @@ print(f"UK build time {datetime.now() - startTime}")
 # )
 # print(f"UK build time {datetime.now() - startTime}")
 
-regress = stats.linregress(gpm25["Northing"], gpm25["PM2.5"])
-trend = lambda x, y: regress.intercept + regress.slope * x
+# regress = stats.linregress(gpm25["Northing"], gpm25["PM2.5"])
+# trend = lambda x, y: regress.intercept + regress.slope * x
 
 
-xy = np.array([gpm25["Easting"].values, gpm25["Northing"].values])
+# xy = np.array([gpm25["Easting"].values, gpm25["Northing"].values])
 
-X = np.array([gpm25["dem"].values, gpm25["u10"].values, gpm25["v10"].values]).T
+# X = np.array([gpm25["dem"].values, gpm25["u10"].values, gpm25["v10"].values]).T
 
-lr_model = LinearRegression(normalize=True, copy_X=True, fit_intercept=False)
+# lr_model = LinearRegression(normalize=True, copy_X=True, fit_intercept=False)
 
-m_rk = RegressionKriging(regression_model=lr_model, n_closest_points=10)
-m_rk.fit(X, xy.T, gpm25["PM2.5"])
+# m_rk = RegressionKriging(regression_model=lr_model, n_closest_points=10)
+# m_rk.fit(X, xy.T, gpm25["PM2.5"])
 
-m_rk.predict(X, xy.T, gpm25["PM2.5"])
+# m_rk.predict(X, xy.T, gpm25["PM2.5"])
 
 # startTime = datetime.now()
 # dk = gs.krige.Detrended(
@@ -231,7 +256,7 @@ m_rk.predict(X, xy.T, gpm25["PM2.5"])
 
 
 # startTime = datetime.now()
-# z, ss = krig_uk_dem.execute("grid", gridx, gridy)
+# z, ss = krig_uk_dem.execute("grid", gridx, gridy, specified_drift_arrays= [dem_array])
 # print(f"OK execution time {datetime.now() - startTime}")
 # OK_pm25_uk = np.where(z < 0, 0, z)
 
