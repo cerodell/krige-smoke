@@ -71,15 +71,14 @@ gpm25["Easting"], gpm25["Northing"] = gpm25.geometry.x, gpm25.geometry.y
 gpm25.head()
 gpm25.to_csv(str(data_dir) + "/obs/gpm25.csv")
 
-# %%
+# # %%
 
-gpm25_poly = gpd.read_file(str(data_dir) + "/obs/outer_bounds")
-gpm25_poly_buff = gpm25_poly.buffer(-80_000)
-gpm25_buff = gpd.GeoDataFrame(
-    {"geometry": gpd.GeoSeries(gpm25_poly_buff)}, crs=gpm25.crs
-)
-gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
-
+# gpm25_poly = gpd.read_file(str(data_dir) + "/obs/outer_bounds")
+# gpm25_poly_buff = gpm25_poly.buffer(-80_000)
+# gpm25_buff = gpd.GeoDataFrame(
+#     {"geometry": gpd.GeoSeries(gpm25_poly_buff)}, crs=gpm25.crs
+# )
+# gpm25_verif = gpd.sjoin(gpm25, gpm25_buff, predicate="within")
 
 # %%
 
@@ -96,42 +95,6 @@ grid_ds = salem.Grid(
     pixel_ref="corner",
 ).to_dataset()
 
-list_ds, random_ids_list = [], []
-for i in range(0, 10):
-    loopTime = datetime.now()
-
-    ds = grid_ds
-    gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
-    random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
-    random_ids = random_sample.id.values
-    # print(random_ids)
-    gpm25_krig = gpm25.loc[~gpm25.id.isin(random_sample.id)]
-    print(f"Random Sample index 0 {random_ids[0]}")
-
-    krig = OrdinaryKriging(
-        x=gpm25_krig["Easting"],
-        y=gpm25_krig["Northing"],
-        z=gpm25_krig["PM2.5"],
-        variogram_model=variogram_model,
-        # enable_statistics=True,
-        nlags=nlags,
-    )
-    z, ss = krig.execute("grid", gridx, gridy)
-    OK_pm25 = np.where(z < 0, 0, z)
-
-    ds.assign_coords({"test": i})
-    ds.assign_coords({"ids": np.arange(len(random_ids))})
-    ds["pm25"] = (("y", "x"), OK_pm25)
-    random_ids_list.append(random_ids.astype(str))
-
-    list_ds.append(ds)
-    print(f"Loop {i} time {datetime.now() - loopTime}")
-
-
-final_ds = xr.concat(list_ds, dim="test")
-final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
-final_ds["random_sample"] = final_ds["random_sample"].astype(str)
-
 
 def compressor(ds):
     """
@@ -142,12 +105,53 @@ def compressor(ds):
     return ds, encoding
 
 
-final_ds, encoding = compressor(final_ds)
-final_ds.to_netcdf(
-    str(data_dir) + f"/OK-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
-    encoding=encoding,
-    mode="w",
-)
+for frac in [0.1, 0.3, 0.5]:
+    print(f"looping {int(frac*100)}")
+    random_sample_df = pd.read_csv(
+        str(data_dir) + f"/random-samples-{int(frac*100)}.csv", index_col=0
+    )
+    list_ds, random_ids_list = [], []
+    for i in range(0, 10):
+        loopTime = datetime.now()
+
+        ds = grid_ds
+        # gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
+        # random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
+        random_ids = random_sample_df[str(i)].values
+        # print(random_ids)
+        gpm25_krig = gpm25.loc[~gpm25.id.isin(random_ids)]
+        print(f"Random Sample index 0 {random_ids[0]}")
+
+        krig = OrdinaryKriging(
+            x=gpm25_krig["Easting"],
+            y=gpm25_krig["Northing"],
+            z=gpm25_krig["PM2.5"],
+            variogram_model=variogram_model,
+            # enable_statistics=True,
+            nlags=nlags,
+        )
+        z, ss = krig.execute("grid", gridx, gridy)
+        OK_pm25 = np.where(z < 0, 0, z)
+
+        ds.assign_coords({"test": i})
+        ds.assign_coords({"ids": np.arange(len(random_ids))})
+        ds["pm25"] = (("y", "x"), OK_pm25)
+        random_ids_list.append(random_ids.astype(str))
+
+        list_ds.append(ds)
+        print(f"Loop {i} time {datetime.now() - loopTime}")
+
+    final_ds = xr.concat(list_ds, dim="test")
+    final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
+    final_ds["random_sample"] = final_ds["random_sample"].astype(str)
+
+    final_ds, encoding = compressor(final_ds)
+    final_ds.to_netcdf(
+        str(data_dir)
+        + f"/OK-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
+        encoding=encoding,
+        mode="w",
+    )
 
 
 # fig = plt.figure(figsize=(8, 4))

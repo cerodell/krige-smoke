@@ -1,12 +1,15 @@
-jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps.py
-mv /Users/rodell/krige-smoke/scripts/comps.ipynb /Users/rodell/krige-smoke/docs/source/
+jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-data.py
+mv /Users/rodell/krige-smoke/scripts/comps-data.ipynb /Users/rodell/krige-smoke/docs/source/
 
 jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-ok.py
 mv /Users/rodell/krige-smoke/scripts/comps-ok.ipynb /Users/rodell/krige-smoke/docs/source/
 
 
-jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-uk.py
-mv /Users/rodell/krige-smoke/scripts/comps-uk.ipynb /Users/rodell/krige-smoke/docs/source/
+jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-uk-aod.py
+mv /Users/rodell/krige-smoke/scripts/comps-uk-aod.ipynb /Users/rodell/krige-smoke/docs/source/
+
+jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-ver.py
+mv /Users/rodell/krige-smoke/scripts/comps-ver.ipynb /Users/rodell/krige-smoke/docs/source/
 
 cd /Users/rodell/krige-smoke/docs
 

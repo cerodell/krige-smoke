@@ -120,57 +120,6 @@ era_ds_T = krig_ds.salem.transform(era_ds)
 var_array = era_ds_T[var].values
 
 
-gpm25_verif = gpm25
-list_ds, random_ids_list = [], []
-for i in range(0, 10):
-    loopTime = datetime.now()
-
-    ds = krig_ds
-    gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
-    random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
-    random_ids = random_sample.id.values
-    gpm25_krig = gpm25.loc[~gpm25.id.isin(random_sample.id)]
-    print(f"Random Sample index 0 {random_ids[0]}")
-    var_points = era_points(gpm25_krig)
-    startTime = datetime.now()
-    krig = UniversalKriging(
-        x=gpm25_krig[
-            "Easting"
-        ].values,  ## x location of aq monitors in lambert conformal
-        y=gpm25_krig[
-            "Northing"
-        ].values,  ## y location of aq monitors in lambert conformal
-        z=gpm25_krig["PM2.5"].values,  ## measured PM 2.5 concentrations at locations
-        # drift_terms=["external_Z", "specified"],
-        drift_terms=["specified"],
-        variogram_model=variogram_model,
-        nlags=nlags,
-        # external_drift=var_array,  ## 2d array of dem used for external drift
-        # external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
-        # external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
-        specified_drift=[var_points],  ## elevation of aq monitors
-    )
-    print(f"UK build time {datetime.now() - startTime}")
-
-    startTime = datetime.now()
-    z, ss = krig.execute("grid", gridx, gridy, specified_drift_arrays=[var_array])
-    UK_pm25 = np.where(z < 0, 0, z)
-    print(f"UK execute time {datetime.now() - startTime}")
-
-    ds.assign_coords({"test": i})
-    ds.assign_coords({"ids": np.arange(len(random_ids))})
-    ds["pm25"] = (("y", "x"), UK_pm25)
-    random_ids_list.append(random_ids.astype(str))
-
-    list_ds.append(ds)
-    print(f"Loop {i} time {datetime.now() - loopTime}")
-
-
-final_ds = xr.concat(list_ds, dim="test")
-final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
-final_ds["random_sample"] = final_ds["random_sample"].astype(str)
-
-
 def compressor(ds):
     """
     this function compresses datasets
@@ -180,10 +129,66 @@ def compressor(ds):
     return ds, encoding
 
 
-ds_concat, encoding = compressor(final_ds)
-final_ds.to_netcdf(
-    str(data_dir)
-    + f"/UK-{var}-sp-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
-    encoding=encoding,
-    mode="w",
-)
+for frac in [0.1, 0.3, 0.5]:
+    print(f"looping {int(frac*100)}")
+    random_sample_df = pd.read_csv(
+        str(data_dir) + f"/random-samples-{int(frac*100)}.csv", index_col=0
+    )
+    list_ds, random_ids_list = [], []
+    for i in range(0, 10):
+        loopTime = datetime.now()
+
+        ds = krig_ds
+        # gpm25_veriff = gpm25_verif.sample(frac=1).reset_index(drop=True)
+        # random_sample = gpm25_veriff.sample(frac=frac, replace=True, random_state=1)
+        random_ids = random_sample_df[str(i)].values
+        # print(random_ids)
+        gpm25_krig = gpm25.loc[~gpm25.id.isin(random_ids)]
+        print(f"Random Sample index 0 {random_ids[0]}")
+        var_points = era_points(gpm25_krig)
+        startTime = datetime.now()
+        krig = UniversalKriging(
+            x=gpm25_krig[
+                "Easting"
+            ].values,  ## x location of aq monitors in lambert conformal
+            y=gpm25_krig[
+                "Northing"
+            ].values,  ## y location of aq monitors in lambert conformal
+            z=gpm25_krig[
+                "PM2.5"
+            ].values,  ## measured PM 2.5 concentrations at locations
+            # drift_terms=["external_Z", "specified"],
+            drift_terms=["specified"],
+            variogram_model=variogram_model,
+            nlags=nlags,
+            # external_drift=var_array,  ## 2d array of dem used for external drift
+            # external_drift_x=gridx,  ## x coordinates of 2d dem data file in lambert conformal
+            # external_drift_y=gridy,  ## y coordinates of 2d dem data file in lambert conformal
+            specified_drift=[var_points],  ## elevation of aq monitors
+        )
+        print(f"UK build time {datetime.now() - startTime}")
+
+        startTime = datetime.now()
+        z, ss = krig.execute("grid", gridx, gridy, specified_drift_arrays=[var_array])
+        UK_pm25 = np.where(z < 0, 0, z)
+        print(f"UK execute time {datetime.now() - startTime}")
+
+        ds.assign_coords({"test": i})
+        ds.assign_coords({"ids": np.arange(len(random_ids))})
+        ds["pm25"] = (("y", "x"), UK_pm25)
+        random_ids_list.append(random_ids.astype(str))
+
+        list_ds.append(ds)
+        print(f"Loop {i} time {datetime.now() - loopTime}")
+
+    final_ds = xr.concat(list_ds, dim="test")
+    final_ds["random_sample"] = (("test", "ids"), np.stack(random_ids_list))
+    final_ds["random_sample"] = final_ds["random_sample"].astype(str)
+
+    ds_concat, encoding = compressor(final_ds)
+    final_ds.to_netcdf(
+        str(data_dir)
+        + f"/UK-{var}-sp-{krig.variogram_model.title()}-{nlags}-{int(frac*100)}.nc",
+        encoding=encoding,
+        mode="w",
+    )

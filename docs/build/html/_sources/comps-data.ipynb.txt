@@ -1,0 +1,326 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d262e6e9",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "id": "36359316",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "# Case Study\n",
+    "\n",
+    "As mentioned before, we will test kringing using observation of poor air quality due to wildfire smoke. We chose July 16, 2021, as there was a high concentration of smoke across a large portion of North America. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b0bd87cb",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "Load python modules"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5421b8f4",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "outputs": [],
+   "source": [
+    "import context\n",
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import xarray as xr\n",
+    "import geopandas as gpd\n",
+    "\n",
+    "import plotly.express as px\n",
+    "import matplotlib.image as mpimg\n",
+    "import plotly.figure_factory as ff\n",
+    "\n",
+    "from context import data_dir"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8b436509",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "Satellite observations of wildfire smoke in the visible spectrum on July 16, 2021. \n",
+    "- Also shown are the satellite hotspot detects (ie wildfire) in orange."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6c58cb76",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "outputs": [],
+   "source": [
+    "img = mpimg.imread(str(data_dir) + \"/obs/worldview.jpeg\")\n",
+    "fig = px.imshow(img)\n",
+    "fig.update_layout(margin=dict(l=10, r=10, t=30, b=30))\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d27ff02a",
+   "metadata": {},
+   "source": [
+    "## Data Setup"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "21add556",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "source": [
+    "### Air quality monitors\n",
+    "- See [find-pa-station.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/find-pa-sations.py),\n",
+    " [get-pa-data.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/get-pa-data.py)\n",
+    " and [reformate-gov.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/reformate-gov.py) for how I obtained and combined data in a single dataset."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "383a775b",
+   "metadata": {},
+   "source": [
+    "### Datetime and domain \n",
+    "Here we define a datetime and domain of interest to test kriging. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6089d52f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Define domain and datetime of interest\n",
+    "wesn = [-129.0, -90.0, 40.0, 60.0]\n",
+    "dot = \"2021-07-16T22:00:00\"\n",
+    "\n",
+    "\n",
+    "## Open Government AQ data and index on dot\n",
+    "gov_ds = xr.open_dataset(str(data_dir) + f\"/gov_aq.nc\")\n",
+    "gov_ds = gov_ds.sel(datetime=dot)\n",
+    "\n",
+    "## Open PurpleAir AQ data, index on dot and drop variables to make ds concat with gov_ds\n",
+    "pa_ds = xr.open_dataset(str(data_dir) + f\"/purpleair_north_america.nc\")\n",
+    "pa_ds = pa_ds.sel(datetime=dot)\n",
+    "pa_ds = pa_ds.drop([\"PM1.0\", \"PM10.0\", \"pressure\", \"PM2.5_ATM\"])\n",
+    "\n",
+    "## concat both datasets on as station id\n",
+    "ds = xr.concat([pa_ds, gov_ds], dim=\"id\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "cb91c2c4",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "### Clean Data \n",
+    "Remove outliers by:\n",
+    "\n",
+    "- Erroneously high values\n",
+    "\n",
+    "- Non-physical negative values\n",
+    "\n",
+    "- Outside two standard deviation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "cabb6a67",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "outputs": [],
+   "source": [
+    "ds = ds.where(ds[\"PM2.5\"] < 1000, drop=True)  ## Erroneously high values\n",
+    "ds = ds.where(ds[\"PM2.5\"] > 0, drop=True)  ## Non-physical negative values\n",
+    "mean = ds[\"PM2.5\"].mean()  ## outside two standard deviation\n",
+    "sd = ds[\"PM2.5\"].std()\n",
+    "sd_ds = ds.where(\n",
+    "    (ds[\"PM2.5\"] > mean - 2 * sd) & (ds[\"PM2.5\"] < mean + 2 * sd), drop=True\n",
+    ")\n",
+    "\n",
+    "sd_ds"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "21d93d11",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "### Reformat Date\n",
+    "- Convert our dataset to a dataframe and drop all aq stations outside our domain of interest"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "db10e32d",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "outputs": [],
+   "source": [
+    "df_pm25 = sd_ds[\"PM2.5\"].to_dataframe().reset_index()\n",
+    "df_pm25 = df_pm25.loc[\n",
+    "    (df_pm25[\"lat\"] > wesn[2])\n",
+    "    & (df_pm25[\"lat\"] < wesn[3])\n",
+    "    & (df_pm25[\"lon\"] > wesn[0])\n",
+    "    & (df_pm25[\"lon\"] < wesn[1])\n",
+    "]\n",
+    "\n",
+    "print(f\"Number of AQ Monitors: {len(df_pm25)}\")\n",
+    "df_pm25.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7728514a",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "### Plot Data\n",
+    "#### Distribution\n",
+    "Look at the data by plotting the measured PM 2.5 values distribution."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "74e2ba4e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([df_pm25[\"PM2.5\"].values], [\"PM2.5\"], colors=[\"green\"])\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8846fd91",
+   "metadata": {},
+   "source": [
+    "The data has "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7a1374b0",
+   "metadata": {
+    "lines_to_next_cell": 0
+   },
+   "source": [
+    "#### Spatial scatter plot\n",
+    "Now,  look at the data by a scatter plot of the measured PM 2.5 values at each station."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d909ed18",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig = px.scatter_mapbox(\n",
+    "    df_pm25,\n",
+    "    lat=\"lat\",\n",
+    "    lon=\"lon\",\n",
+    "    color=\"PM2.5\",\n",
+    "    size=\"PM2.5\",\n",
+    "    color_continuous_scale=\"jet\",\n",
+    "    # hover_name=\"id\",\n",
+    "    center={\"lat\": 50.0, \"lon\": -110.0},\n",
+    "    hover_data=[\"PM2.5\"],\n",
+    "    mapbox_style=\"carto-positron\",\n",
+    "    zoom=3.0,\n",
+    ")\n",
+    "fig.update_layout(margin=dict(l=0, r=100, t=30, b=10))\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9dca67af",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
+   "source": [
+    "We can see how the fires are creating poor air quality in the eastern Rockies and prairies/plains."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4762509b",
+   "metadata": {},
+   "source": [
+    "### Reproject Data\n",
+    "\n",
+    "We want to convert the data to the linear, meter-based Lambert projection (EPSG:3347) recommended by Statistics Canada. This conversion is helpful as lat/lon coordinates are not as suitable for measuring distances which is vital for interpolating data."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0d17dddd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "gpm25 = gpd.GeoDataFrame(\n",
+    "    df_pm25,\n",
+    "    crs=\"EPSG:4326\",\n",
+    "    geometry=gpd.points_from_xy(df_pm25[\"lon\"], df_pm25[\"lat\"]),\n",
+    ").to_crs(\"EPSG:3347\")\n",
+    "gpm25[\"Easting\"], gpm25[\"Northing\"] = gpm25.geometry.x, gpm25.geometry.y\n",
+    "gpm25.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3fbdab8d",
+   "metadata": {},
+   "source": [
+    "### Onto Ordinary Kriging..."
+   ]
+  }
+ ],
+ "metadata": {
+  "jupytext": {
+   "cell_metadata_filter": "-all",
+   "main_language": "python",
+   "notebook_metadata_filter": "-all"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

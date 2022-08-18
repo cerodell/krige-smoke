@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Overview &#8212; Explore Kriging</title>
+    <title>Explore Kriging &#8212; Explore Kriging</title>
 
   <!-- Loaded before other Sphinx assets -->
   <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -36,7 +36,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Background" href="overview.html" />
+    <link rel="next" title="Project Overview" href="comps-proj.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
 
@@ -95,13 +95,13 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="overview.html">
-   Background
+  <a class="reference internal" href="comps-proj.html">
+   Project Overview
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="comps.html">
-   Data Setup
+  <a class="reference internal" href="comps-data.html">
+   Case Study
   </a>
  </li>
  <li class="toctree-l1">
@@ -110,8 +110,13 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="comps-uk.html">
+  <a class="reference internal" href="comps-uk-aod.html">
    Universal Kriging (UK)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="comps-ver.html">
+   Verifying of Kriging
   </a>
  </li>
 </ul>
@@ -247,9 +252,48 @@ title="Print to PDF"
     <nav id="bd-toc-nav" aria-label="Page">
         <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#indices-and-tables">
-   Indices and tables
+  <a class="reference internal nav-link" href="#overview">
+   Overview
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#kriging-background">
+     Kriging Background
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#who">
+       Who
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#what">
+       What
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#when">
+       When
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#where">
+       Where
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#why">
+       Why
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#indices-and-tables">
+       Indices and tables
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -260,7 +304,7 @@ title="Print to PDF"
         <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Overview</h1>
+                <h1>Explore Kriging</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -271,9 +315,48 @@ title="Print to PDF"
                         <nav aria-label="Page">
                             <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#indices-and-tables">
-   Indices and tables
+  <a class="reference internal nav-link" href="#overview">
+   Overview
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#kriging-background">
+     Kriging Background
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#who">
+       Who
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#what">
+       What
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#when">
+       When
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#where">
+       Where
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#why">
+       Why
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#indices-and-tables">
+       Indices and tables
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -285,59 +368,99 @@ title="Print to PDF"
 
               <div>
 
-  <hr class="docutils" />
+  <div class="section" id="explore-kriging">
+<h1>Explore Kriging<a class="headerlink" href="#explore-kriging" title="Permalink to this headline">#</a></h1>
 <div class="section" id="overview">
-<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">#</a></h1>
-<p>From esri:</p>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">#</a></h2>
+<p>A comprehensive exam question from <strong>Dr Phil Austin</strong> for <strong>Christopher Rodell</strong></p>
+<p>Goal of project is to explore kriging and test its varied methods.</p>
+<div class="section" id="kriging-background">
+<h3>Kriging Background<a class="headerlink" href="#kriging-background" title="Permalink to this headline">#</a></h3>
 <blockquote>
-<div><p><a class="reference external" href="https://pro.arcgis.com/en/pro-app/2.8/tool-reference/spatial-analyst/how-kriging-works.htm#:~:text=Kriging%20is%20a%20multistep%20process,directional%20bias%20in%20the%20data.">Kriging</a> is an advanced geostatistical procedure that generates an estimated surface from a scattered set of points with z-values. Unlike other interpolation methods in the Interpolation toolset, to use the Kriging tool effectively involves an interactive investigation of the spatial behavior of the phenomenon represented by the z-values before you select the best estimation method for generating the output surface.</p>
+<div><p>“<a class="reference external" href="https://zia207.github.io/geospatial-r-github.io/kriging.html">Kriging</a> is a group of geostatistical techniques to interpolate the value of a random field (e.g., the soil variables as a function of the geographic location) at an un-sampled location from known observations of its value at nearby locations. The main statistical assumption behind kriging is one of stationarity which means that statistical properties (such as mean and variance) do not depend on the exact spatial locations, so the mean and variance of a variable at one location is equal to the mean and variance at another location. The basic idea of kriging is to predict the value at a given point by computing a weighted average of the known values of the function in the neighborhood of the point. Unlike other deterministic interpolation methods such as inverse distance weighted (IDW) and Spline, kriging is based on auto-correlation-that is, the statistical relationships among the measured points to interpolate the values in the spatial field. Kriging is capable to produce prediction surface with uncertainty. Although stationarity (constant mean and variance) and isotropy (uniformity in all directions) are the two main assumptions for kriging to provide best linear unbiased prediction, however, there is flexibility of these assumptions for various forms and methods of kriging.” - <a class="reference external" href="https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html">Prof. Zia Ahmed</a></p>
 </div></blockquote>
-<a class="reference internal image-reference" href="_images/krig.gif"><img alt="_images/krig.gif" class="align-center" src="_images/krig.gif" style="width: 600px;" /></a>
+<div class="section" id="who">
+<h4>Who<a class="headerlink" href="#who" title="Permalink to this headline">#</a></h4>
+<ul class="simple">
+<li><p>Developed by french mathematician Georges Matheron (based on the master’s thesis of Danie G. Krige.)</p></li>
+</ul>
+</div>
+<div class="section" id="what">
+<h4>What<a class="headerlink" href="#what" title="Permalink to this headline">#</a></h4>
+<ul class="simple">
+<li><p>A computationally intensive method of interpolation.</p></li>
+<li><p>Commonly referred to as a Gaussian process regression</p></li>
+<li><p>A Gaussian process is a probability distribution over possible functions that fit a set of points.</p></li>
+</ul>
+</div>
+<div class="section" id="when">
+<h4>When<a class="headerlink" href="#when" title="Permalink to this headline">#</a></h4>
+<ul class="simple">
+<li><p>1960</p></li>
+</ul>
+</div>
+<div class="section" id="where">
+<h4>Where<a class="headerlink" href="#where" title="Permalink to this headline">#</a></h4>
+<ul class="simple">
+<li><p>France/South Africa</p></li>
+</ul>
+</div>
+<div class="section" id="why">
+<h4>Why<a class="headerlink" href="#why" title="Permalink to this headline">#</a></h4>
+<ul class="simple">
+<li><p>Developed to estimate the most likely distribution of gold based on samples from a few boreholes</p></li>
+<li><p>Used when trying to predict the value of a function at a given point. Derived by computing a weighted average of the known values of the function in the neighborhood of the particular point.</p></li>
+<li><p>Exploration and Wanderings: Guided by the concept of “not all who wander are lost” (JJ Tolkien)</p></li>
+</ul>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Background</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#comprehensive-exam-question">Comprehensive exam question</a></li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#intro-kriging">Intro Kriging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#methods">Methods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comps-proj.html">Project Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comps-proj.html#datasets">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-proj.html#methods">Methods</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="comps.html">Data Setup</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#PurpleAir-and-Government-operated-air-quality-monitors">PurpleAir and Government operated air quality monitors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Case-Study.">Case Study.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Choose-datetime-and-domain-of-interest-to-test-kriging">Choose datetime and domain of interest to test kriging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Remove-outliers-by..">Remove outliers by..</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Reformat-Date">Reformat Date</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Plot-Data">Plot Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Reproject-Data">Reproject Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps.html#Onto-Ordinary-Kriging…">Onto Ordinary Kriging…</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comps-data.html">Case Study</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comps-data.html#Data-Setup">Data Setup</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="comps-ok.html">Ordinary Kriging (OK)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Load-Data">Load Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Create-Grid">Create Grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Setup-OK">Setup OK</a></li>
 <li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Variogram">Variogram</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps-ok.html#variogram-statistics">variogram statistics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Execute-OK">Execute OK</a></li>
 <li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Plot-OK-Modelled-PM2.5">Plot OK Modelled PM2.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="comps-ok.html#Onto-Universal-Kriging…">Onto Universal Kriging…</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="comps-uk.html">Universal Kriging (UK)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="comps-uk.html#Create-Grid">Create Grid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps-uk.html#ERA5-Data">ERA5 Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps-uk.html#Execute-UK">Execute UK</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comps-uk.html#Plot-UK">Plot UK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comps-uk-aod.html">Universal Kriging (UK)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comps-uk-aod.html#Load-Data">Load Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-uk-aod.html#Set-up-specified-drift">Set up specified drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-uk-aod.html#Setup-UK">Setup UK</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="comps-ver.html">Verifying of Kriging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comps-ver.html#Load-python-modules/package">Load python modules/package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-ver.html#Get-a-output-of-all-kriging-configurations">Get a output of all kriging configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-ver.html#Open-kriging-configurations-and-perform-stats">Open kriging configurations and perform stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-ver.html#Plot-results-of-Mean-Absolute-Error">Plot results of Mean Absolute Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-ver.html#Plot-results-of-Root-Mean-Square-Error">Plot results of Root Mean Square Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comps-ver.html#Plot-results-of-Pearsons-Corelation">Plot results of Pearsons Corelation</a></li>
 </ul>
 </li>
 </ul>
 </div>
+</div>
 <div class="section" id="indices-and-tables">
-<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">#</a></h2>
+<h4>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">#</a></h4>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</div>
+</div>
 </div>
 </div>
 
@@ -349,10 +472,10 @@ title="Print to PDF"
 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='right-next' id="next-link" href="overview.html" title="next page">
+    <a class='right-next' id="next-link" href="comps-proj.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Background</p>
+        <p class="prev-next-title">Project Overview</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

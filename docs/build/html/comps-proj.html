@@ -1,0 +1,517 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Overview &#8212; Explore Kriging</title>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Case Study." href="comps-data.html" />
+    <link rel="prev" title="Explore Kriging" href="index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+
+
+    <!-- Google Analytics -->
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+
+    <div class="container-fluid" id="banner"></div>
+
+
+
+    <div class="container-xl">
+      <div class="row">
+
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+
+
+
+      <img src="_static/daftpunktocat-thomas.gif" class="logo" alt="logo">
+
+
+      <h1 class="site-logo" id="site-title">Explore Kriging</h1>
+
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Contents:
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Project Overview
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="comps-data.html">
+   Case Study.
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="comps-ok.html">
+   Ordinary Kriging (OK)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="comps-uk-aod.html">
+   Universal Kriging (UK)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="comps-ver.html">
+   Verifying of Kriging
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+
+
+
+
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+
+    <div class="header-article row sticky-top noprint">
+
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-download-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Download this page">
+      <i class="fas fa-download"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="_sources/comps-proj.rst.txt"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="headerbtn__text-container">.rst</span>
+</a>
+
+      </li>
+
+      <li>
+
+<button onclick="printPdf(this)"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="headerbtn__text-container">.pdf</span>
+</button>
+
+      </li>
+
+    </ul>
+  </div>
+</div>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+
+>
+
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#datasets">
+   Datasets
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#purple-air">
+     Purple Air
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#government-air-quality-monitors">
+     Government Air Quality Monitors
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#methods">
+   Methods
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#pykrige">
+     PyKrige
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#ordinary-kriging-ok">
+       Ordinary kriging (OK)
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#universal-kriging-uk">
+       Universal Kriging (UK)
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#regression-kriging">
+       Regression kriging
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Project Overview</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#datasets">
+   Datasets
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#purple-air">
+     Purple Air
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#government-air-quality-monitors">
+     Government Air Quality Monitors
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#methods">
+   Methods
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#pykrige">
+     PyKrige
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#ordinary-kriging-ok">
+       Ordinary kriging (OK)
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#universal-kriging-uk">
+       Universal Kriging (UK)
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#regression-kriging">
+       Regression kriging
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+
+              <div>
+
+  <div class="section" id="project-overview">
+<h1>Project Overview<a class="headerlink" href="#project-overview" title="Permalink to this headline">#</a></h1>
+<p>A comprehensive exam question from <strong>Dr Phil Austin</strong> for <strong>Christopher Rodell</strong></p>
+<p>The project aims to explore kriging and test its varied methods. To explore kriging, we will use air quality observation from locations across North America during a poor air quality event due to high wildfire activity. July 16, 2021, over a thousand active wildfires were burning in western North America. The subsequent smoke from these wildfires produced poor air quality across much of the continent. We will test how well we can interpolate the observed poor air quality to generate a spatial map of ground-level particulate matter 2.5 (PM2.5) concentrations.</p>
+<div class="section" id="datasets">
+<h2>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">#</a></h2>
+<div class="section" id="purple-air">
+<h3>Purple Air<a class="headerlink" href="#purple-air" title="Permalink to this headline">#</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www2.purpleair.com/">Purple Air</a> is a network of low cost air air quality monitors.</p></li>
+<li><p>The air quality metric, Particulate Matter 2.5, will be interpolated. PM 2.5 is tiny particles or droplets in the air that are two and one half microns or less in width.</p></li>
+<li><p>Apply Kriging to generate a spatial map of ground-level smoke concentrations across western norther america.</p></li>
+<li><p>Data was obtained and reformated using <a class="reference external" href="https://github.com/cerodell/krige-smoke/blob/main/scripts/get-pa-data.py">get-pa-data.py</a></p></li>
+</ul>
+</div>
+<div class="section" id="government-air-quality-monitors">
+<h3>Government Air Quality Monitors<a class="headerlink" href="#government-air-quality-monitors" title="Permalink to this headline">#</a></h3>
+<ul class="simple">
+<li><p>Government operated air quality stations will be added to the PuprleAir data for the interpolation process</p></li>
+<li><dl class="simple">
+<dt>Data from government operated air quality stations came from multiple sources. More on these data files can be found in the <a class="reference external" href="https://github.com/cerodell/krige-smoke/blob/main/scripts/reformate-gov.py">reformate-gov.py</a></dt><dd><ul>
+<li><p><a class="reference external" href="https://aqs.epa.gov/aqsweb/airdata/download_files.html">USA Data</a></p></li>
+<li><p><a class="reference external" href="https://airdata.alberta.ca/reporting/Download/OneParameter">Alberta Data</a></p></li>
+<li><p><a class="reference external" href="ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/AnnualSummary/">British Columbia Data</a></p></li>
+<li><p><a class="reference external" href="ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/AnnualSummary/">British Columbia Data</a></p></li>
+<li><p><a class="reference external" href="http://aqm.enr.gov.nt.ca/">North West Territories Data</a></p></li>
+<li><p><a class="reference external" href="http://aqm.enr.gov.nt.ca/">North West Territories Data</a></p></li>
+<li><p><a class="reference external" href="https://web43.gov.mb.ca/EnvistaWeb/Default.ltr.aspx">Manitoba Data</a></p></li>
+<li><p><a class="reference external" href="http://www.airqualityontario.com/science/data_sets.php">Ontario Data</a></p></li>
+<li><p><a class="reference external" href="https://www.environnement.gouv.qc.ca/air/reseau-surveillance/telechargement.asp">Quebec Data</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="methods">
+<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this headline">#</a></h2>
+<blockquote>
+<div><p>For this exam question we use ordinary kriging (ok), universal kriging with external/specified drift (uk) and regression kriging (rk)</p>
+</div></blockquote>
+<div class="section" id="pykrige">
+<h3>PyKrige<a class="headerlink" href="#pykrige" title="Permalink to this headline">#</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://geostat-framework.readthedocs.io/projects/pykrige/en/stable/index.html">PyKrige</a> is a python library that supports 2D and 3D ordinary, universal and regression kriging.</p></li>
+<li><p>PyKrige provides standard variogram models (linear, power, spherical, gaussian, exponential) for the kriging process</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The following definitions come from a <a class="reference external" href="https://zia207.github.io/geospatial-r-github.io/index.html">geospatial data science course</a> created by <a class="reference external" href="https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html">Prof. Zia Ahmed</a> at The State of New York University at Buffalo.</p>
+</div>
+<div class="section" id="ordinary-kriging-ok">
+<h4>Ordinary kriging (OK)<a class="headerlink" href="#ordinary-kriging-ok" title="Permalink to this headline">#</a></h4>
+<p>Ordinary kriging (OK) is the most widely used kriging method. It is a linear unbiased estimators since error mean is equal to zero. In OK, local mean is filtered from the linear estimator by forcing the kriging weights to sum to 1. The OK is usually preferred to simple kriging because it requires neither knowledge nor stationarity of mean over the entire area</p>
+<div class="math notranslate nohighlight">
+\[\begin{array}{l}Z_{O K}{ }^{*}(u)=\sum_{\alpha=1}^{n(u)} \lambda_{\alpha}^{O K}(u) Z\left(u_{\alpha}\right) \text { with } \sum_{\alpha=1}^{n(u)} \lambda_{\alpha}^{O K}=1\end{array}\]</div>
+<ul class="simple">
+<li><p>Where is <span class="math notranslate nohighlight">\(\lambda_{\alpha}^{O K}(u)\)</span>  weight assigned to the known variables at location  <span class="math notranslate nohighlight">\(\left(u_{a}\right)\)</span> and <span class="math notranslate nohighlight">\(n(u)\)</span> is the number of measured values used in estimation of the neighborhood of <span class="math notranslate nohighlight">\(u\)</span>.</p></li>
+</ul>
+</div>
+<div class="section" id="universal-kriging-uk">
+<h4>Universal Kriging (UK)<a class="headerlink" href="#universal-kriging-uk" title="Permalink to this headline">#</a></h4>
+<p>Universal Kriging (UK) is a variant of the Ordinary Kriging under non-stationary condition where mean differ in a deterministic way in different locations (local trend or drift), while only the variance is constant. This second-order stationarity (“weak stationarity”) is often a pertinent assumption with environmental exposures. In UK, usually first trend is calculated as a function of the coordinates and then the variation in what is left over (the residuals) as a random field is added to trend for making final prediction.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned} Z\left(s_{i}\right) &amp;=m\left(s_{i}\right)+e\left(s_{i}\right) \\ Z(\vec{x}) &amp;=\sum_{k=0}^{K} \beta_{k} f_{k}(\vec{x})+\varepsilon(\vec{x}) \end{aligned}\end{split}\]</div>
+<ul class="simple">
+<li><p>Where the <span class="math notranslate nohighlight">\(f_{k}\)</span> are some global functions of position  <span class="math notranslate nohighlight">\(\vec{x}\)</span>  and the  <span class="math notranslate nohighlight">\(\beta_{k}\)</span> are the coefficients.</p></li>
+<li><p>The <span class="math notranslate nohighlight">\(f\)</span> are called base functions.  The  <span class="math notranslate nohighlight">\(\varepsilon(\vec{x})\)</span>  is the spatially-correlated error, which is modelled as before, with a variogram, but now only considering the residuals, after the global trend is removed.</p></li>
+</ul>
+</div>
+<div class="section" id="regression-kriging">
+<h4>Regression kriging<a class="headerlink" href="#regression-kriging" title="Permalink to this headline">#</a></h4>
+<p>Regression kriging (RK) mathematically equivalent to the universal kriging or kriging with external drift, where auxiliary predictors are used directly to solve the kriging weights. Regression kriging combines a regression model with simple kriging of the regression residuals. The experimental variogram of residuals is first computed and modeled, and then simple kriging (SK) is applied to the residuals to give the spatial prediction of the residuals.</p>
+<div class="math notranslate nohighlight">
+\[\begin{array}{l}Z_{R K}^{*}(u)=m_{R K}^{*}(u)+\sum_{\alpha=1}^{n(u)} \lambda_{\alpha}^{R K}(u) R\left(u_{\alpha}\right)\end{array}\]</div>
+<ul class="simple">
+<li><p>Where <span class="math notranslate nohighlight">\(m^{*} R K(u \alpha)\)</span> is the regression estimate for location <span class="math notranslate nohighlight">\(u\)</span> and <span class="math notranslate nohighlight">\(R(u \alpha)\)</span> are the residuals <span class="math notranslate nohighlight">\([R(u \alpha)-m(u \alpha)]\)</span> of the observed locations, <span class="math notranslate nohighlight">\(n(u)\)</span>.</p></li>
+</ul>
+<dl class="simple">
+<dt>Covariates for UK with external/specified drift.</dt><dd><ol class="arabic simple">
+<li><p>elevation (take from a <a class="reference external" href="http://research.jisao.washington.edu/data_sets/elevation/">digital elevation model</a>)</p></li>
+<li><p>aerosol optical depth (derived from the <a class="reference external" href="https://www.nsstc.uah.edu/data/sundar/MODIS_AOD_L3_HRG/">modis aqua/terra satellites</a>)</p></li>
+<li><p>wind direction (as modeled by <a class="reference external" href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview">ERA5</a>)</p></li>
+</ol>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+
+
+              </div>
+
+            </main>
+            <footer class="footer-article noprint">
+
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="index.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Explore Kriging</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="comps-data.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Case Study.</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+
+    By Christopher Rodell<br/>
+
+      &copy; Copyright 2022, Christopher Rodell.<br/>
+</p>
+        </footer>
+    </div>
+
+</div>
+
+
+      </div>
+    </div>
+
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

@@ -8,12 +8,14 @@ import gstools as gs
 from context import data_dir
 from datetime import datetime
 
+
 # ids, lat, lon, pm25 = np.loadtxt(os.path.join("..", "data", "pm25_obs.txt")).T
 
 df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
 lat, lon, pm25 = df["lat"], df["lon"], df["PM2.5"]
+
 ###############################################################################
-# First we will estimate the variogram of our pm25erature data.
+# First we will estimate the variogram of our PM2.5 data.
 # As the maximal bin distance we choose 8 degrees, which corresponds to a
 # chordal length of about 900 km.
 
@@ -37,7 +39,7 @@ print(model)
 # Now we want to interpolate the data using Universal and Regression kriging
 # in order to compare them.
 # We will use a north-south drift by assuming a linear correlation
-# of pm25erature with latitude.
+# of PM2.5 with latitude.
 
 
 def north_south_drift(lat, lon):
@@ -103,7 +105,7 @@ ax[2].contour(g_lon, g_lat, fld_dk, levels, cmap="coolwarm", zorder=-10)
 # [ax[i].set_xlabel("Longitude / °") for i in range(3)]
 # ax[0].set_ylabel("Latitude / °")
 
-ax[0].set_title("pm25erature observations at 2m\nfrom DWD (2020-06-09 12:00)")
+ax[0].set_title("PM2.5 observations at 2m\nfrom DWD (2020-06-09 12:00)")
 ax[1].set_title("Universal Kriging\nwith North-South drift")
 ax[2].set_title("Regression Kriging\nwith North-South trend")
 
@@ -116,12 +118,12 @@ fig.colorbar(co2, ax=ax, **fmt).set_label("T / °C")
 # we'll take a look at a cross-section at a longitude of 10 degree:
 
 # fig, ax = plt.subplots()
-# label = "latitude-pm25erature scatter"
+# label = "latitude-PM2.5 scatter"
 # reg_trend = trend(g_lat, g_lon)
 # ax.scatter(lat, pm25, c="silver", alpha=1.0, edgecolors="none", label=label)
-# ax.plot(g_lat, fld_uk[:, 20], c="C0", label="Universal Kriging: pm25erature (10° lon)")
+# ax.plot(g_lat, fld_uk[:, 20], c="C0", label="Universal Kriging: PM2.5 (10° lon)")
 # ax.plot(g_lat, mean[:, 20], "--", c="C0", label="North-South drift: Universal Kriging")
-# ax.plot(g_lat, fld_dk[:, 20], c="C1", label="Regression Kriging: pm25erature (10° lon)")
+# ax.plot(g_lat, fld_dk[:, 20], c="C1", label="Regression Kriging: PM2.5 (10° lon)")
 # ax.plot(g_lat, reg_trend, "--", c="C1", label="North-South trend: Regression Kriging")
 # ax.set_ylim(7)
 # ax.set_xlabel("Latitude / °")

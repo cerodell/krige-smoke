@@ -1,16 +1,15 @@
 # %% [markdown]
 # # Ordinary Kriging (OK)
+# Ordinary kriging (OK) is the most widely used kriging method. It is a linear unbiased estimators since error mean is equal to zero. In OK, local mean is filtered from the linear estimator by forcing the kriging weights to sum to 1. The OK is usually preferred to simple kriging because it requires neither knowledge nor stationarity of mean over the entire area
+# $$
+# \begin{array}{l}Z_{O K}{ }^{*}(u)=\sum_{\alpha=1}^{n(u)} \lambda_{\alpha}^{O K}(u) Z\left(u_{\alpha}\right) \text { with } \sum_{\alpha=1}^{n(u)} \lambda_{\alpha}^{O K}=1\end{array}
+# $$
+# - Where is $\lambda_{\alpha}^{O K}(u)$  weight assigned to the known variables at location  $\left(u_{a}\right)$ and $n(u)$ is the number of measured values used in estimation of the neighborhood of $u$.
+#
+# - An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK less suitable for interpolation over large domains and often requires data transformation.
 
-# - Ordinary Kriging (OK) is a commonly used geostatistical method.
-# - OK provides the best linear unbiased estimates (BLUE), where the estimated value for the point of interest is a weighted linear combination of sampled observations (i.e., the sum of weights is 1) [Matheron1963](http://dx.doi.org/10.2113/gsecongeo.58.8.1246).
-# - OK is similar to but more advanced than Inverse distance weighting, as the weight 𝜆𝑖 of OK is estimated by minimizing the variance of the prediction errors.
-#   - This is achieved by constructing a semivariogram that models the difference between neighboring values.
-# - Compared to non-geostatistical algorithms, the strength of ordinary kriging is its ability to model the spatial structure (variance) of the sampled observations.
-# - An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK unsuitable for interpolation over large domains and often requires data transformation.
-
-# <br>
-# <br>
-# Thank you to Xinli Cai for this great description of OK in her [master thesis](https://era.library.ualberta.ca/items/92cdc6ae-43fd-453f-91f2-5ff275cf85cd/view/164484ed-e950-408c-8be7-39d3764bdc15/Cai_Xinli_201704_MSc.pdf)
+# %% [markdown]
+# Load python modules
 # %%
 import context
 import salem
@@ -27,7 +26,9 @@ from utils.utils import pixel2poly, plotvariogram
 from context import data_dir
 
 # %% [markdown]
-# Open the reformated data with the linear, meter-based Lambert projection (EPSG:3347). Again this is helpful as lat/lon coordinates are not suitable for measuring distances which is vital for spatial interpolation.
+# ## Load Data
+# Open the reformated data with the linear, meter-based Lambert projection (EPSG:3347).
+# - Again this is helpful as lat/lon coordinates are less suitable for measuring distances which is important for spatial interpolation.
 
 # %%
 df = pd.read_csv(str(data_dir) + "/obs/gpm25.csv")
@@ -41,7 +42,7 @@ gpm25.head()
 
 
 # %% [markdown]
-# ### Create Grid
+# ## Create Grid
 # Here, we will create a grid we want to use for the interpolation.
 # NOTE we will use salem to create a dataset with the grid. This grid as a xarray dataset will be helpful for the universal kriging when we reproject other gridded data to act as covariances for interpolation.
 # %%
@@ -82,8 +83,10 @@ print(f"OK build time {datetime.now() - startTime}")
 
 
 # %% [markdown]
-# ### Variogram
-# #### variogram overview
+# ## Variogram
+# A variogram is defined as the variance of the difference between field values at two locations.
+
+# ### Overview
 # - Graphical representation of spatial autocorrelation.
 # - Shows a fundamental principle of geography: closer things are more alike than things farther apart
 # - Its created by calculating the difference squared between the values of the paired locations
@@ -96,8 +99,8 @@ print(f"OK build time {datetime.now() - startTime}")
 #    - Gaussian
 #    - Linear
 #  - The fitted model is applied in the interpolation process by forming (kriging) weights for the predicted areas.
-
-# #### variogram parameters
+#
+# ### Parameters
 # - Three parameters that define a variogram..
 #     - sill: the total variance where the empirical model levels off,
 #       -  is the sum of the nugget plus the sills of each nested structure.
@@ -106,27 +109,30 @@ print(f"OK build time {datetime.now() - startTime}")
 #     - nugget: Related to the amount of short range variability in the data.
 #        - Choose a value for the best fit with the first few empirical variogram points.
 #        -  A nugget that's large relative to the sill is problematic and could indicate too much noise and not enough spatial correlation.
-
-
-#### variogram statistics
-# A good model should result in
-#   - Q1 close to zero
-
-#   - Q2 close to one
-#   - cR as small as possible.
-# TODO define above stats variables.
-
 # %% [markdown]
+# ###  Statistics
+# A good model should result in:
+#
+# - Q1 close to zero
+#
+# - Q2 close to one
+#
+# - cR as small as possible.
+#
+# - TODO define above stats variables.
+#
 # #### Our variogram parameters
 # PyKrige will optimize most parameters based on user defined empirical model and the number of bins.
-# - I tested several empirical models and bin sizes and found (for this case study) that a spherical model with 15 bins was optimal based on the output statics.
-# - NOTE the literature supports spherical for geospatial interpolation applications over other methods.
+#
+#  - I tested several empirical models and bin sizes and found (for this case study) that a spherical model with 15 bins was optimal based on the output statics.
+#
+# - The literature supports spherical for geospatial interpolation applications over other methods.
 # %%
 plotvariogram(krig)
 
 
 # %% [markdown]
-# ### Execute OK
+# ## Execute OK
 # Interpolate data to our grid using OK.
 # %%
 startTime = datetime.now()
@@ -137,7 +143,7 @@ OK_pm25 = np.where(z < 0, 0, z)
 # krig_ds["OK_pm25"] = (("y", "x"), OK_pm25)
 
 # %% [markdown]
-# ### Plot OK Modelled PM2.5
+# ## Plot OK Modelled PM2.5
 # Convert data to polygons to be plot-able on a slippy mapbox. The conversion is not necessary, just fun to plot on a slippy map :)
 
 # %%
@@ -155,7 +161,7 @@ fig = px.choropleth_mapbox(
     center={"lat": 50.0, "lon": -110.0},
     zoom=2.5,
     mapbox_style="carto-positron",
-    opacity=0.8,
+    opacity=0.6,
 )
 fig.update_layout(margin=dict(l=0, r=0, t=30, b=10))
 fig.update_traces(marker_line_width=0)
@@ -163,4 +169,4 @@ fig.show()
 
 
 # %% [markdown]
-# ### Onto Universal Kriging...
+# ## Onto Universal Kriging...

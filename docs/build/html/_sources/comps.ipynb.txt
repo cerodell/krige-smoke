@@ -2,7 +2,7 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "id": "b2c17957",
+   "id": "3450f961",
    "metadata": {},
    "source": [
     "# Data Setup"
@@ -10,7 +10,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "d15af0e9",
+   "id": "6bbd7202",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -23,7 +23,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "6f91ac5e",
+   "id": "aeade003",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -34,7 +34,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "6b8690e3",
+   "id": "de461bba",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -53,7 +53,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "138ca0a2",
+   "id": "8ac1a7bd",
    "metadata": {},
    "source": [
     "### Case Study.\n",
@@ -64,7 +64,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "3da9462e",
+   "id": "89350e8b",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -77,7 +77,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "21d4f102",
+   "id": "836c614f",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -88,7 +88,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "694fb97a",
+   "id": "51dfa597",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -112,7 +112,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "2aeb73b9",
+   "id": "d451e0fa",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -126,7 +126,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "bc788772",
+   "id": "1f2aa3d9",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -145,7 +145,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "ce23144b",
+   "id": "f0d0dfdf",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -157,7 +157,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "bf436c3b",
+   "id": "e4c4562e",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -177,7 +177,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "f52e7355",
+   "id": "bbab794d",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -190,7 +190,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "77033904",
+   "id": "8cc6c142",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -200,7 +200,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "11a10e52",
+   "id": "311bf037",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -212,7 +212,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "afb2ab56",
+   "id": "cac9d995",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -235,7 +235,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "8d774b56",
+   "id": "08bb8fad",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -245,7 +245,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "cde6bd72",
+   "id": "e1951b9c",
    "metadata": {},
    "source": [
     "### Reproject Data\n",
@@ -256,7 +256,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "5f653f65",
+   "id": "35076512",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -272,7 +272,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "41e729cc",
+   "id": "70f87e40",
    "metadata": {},
    "source": [
     "### Onto Ordinary Kriging..."
