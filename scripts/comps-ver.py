@@ -66,8 +66,9 @@ from utils.utils import buildsats, plotsns
 # %%
 pathlistUK = sorted(Path(str(data_dir)).glob(f"UK-*"))
 pathlistOK = sorted(Path(str(data_dir)).glob(f"OK-*"))
+pathlistRK = sorted(Path(str(data_dir)).glob(f"RK-*"))
 
-pathlist = pathlistOK + pathlistUK
+pathlist = pathlistOK + pathlistUK + pathlistRK
 
 # print(pathlist)
 
@@ -97,4 +98,12 @@ plotsns("rmse", cmap="coolwarm", df_final=df_final)
 plotsns("pr", cmap="coolwarm_r", df_final=df_final)
 
 # %% [markdown]
-# Based on Pearsons Corelation, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors.
+# Based on Pearson's Correlation, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors.
+
+
+# %% [markdown]
+# ## Conclusion
+# Looking at our case study's basic statistics, OK outperforms the other kriging methods. However, I feel that more time and testing RK would be a better method. The literature supports RK over OK as long as an adequate trend model is fitted. Also, RK was not projected to a lambert conformal projection like in our OK and UK configuration; this is likely contributed to the poor performance of RK. Another thought is testing different ways to transform the data before kriging. Methods like normalizing, square root, cubic root, or natural logarithm transformation could be explored.
+#
+#
+# Finally, looking at different covariates and how one could bring in a wildfire location and alter the kriged weight to be the height in those locations could be interesting. One approach could be to use the BlueSky smoke forecast as a covariate. And perhaps combine it with other covariates like DEM AOD etc.

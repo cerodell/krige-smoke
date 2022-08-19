@@ -60,7 +60,8 @@ Why
    comps-proj
    comps-data
    comps-ok
-   comps-uk-aod
+   comps-uk-bsp
+   comps-rk-dem
    comps-ver
 
 

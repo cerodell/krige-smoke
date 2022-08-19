@@ -2,15 +2,17 @@
  "cells": [
   {
    "cell_type": "markdown",
-   "id": "7c99b3e6",
-   "metadata": {},
+   "id": "cb457422",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
    "source": [
     "# Verifying of Kriging\n",
     "\n",
     "To do this, we will use our (July 16, 2021) case study from before but now randomly remove air quality stations from the kriging process in a defined verification area.\n",
     "\n",
     "\n",
-    "To do this we will define a buffer area as shown in the figure below. \n",
+    "To do this we will define a buffer area as shown in the figure below.\n",
     "\\\n",
     "![title](_static/img/study-map.png)\n",
     "  - The map above was created in [area-map.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/area-map.py)\n",
@@ -19,32 +21,32 @@
     "The buffer zone is a 90 km wide zone on the outside of the verification area. The buffer zone contains air quality stations that are always included for each kriging configuration. This buffer zone was created to ensure the outermost stations were kept, which preserves an equal-sized verification area for each configuration.\n",
     "\n",
     "\\\n",
-    "The randomly removed air quality station from within the verification area will then be used to verify the interpolated PM 2.5 at \n",
-    "their location. We will use simple statics of root mean square error, mean absolute error, and \n",
+    "The randomly removed air quality station from within the verification area will then be used to verify the interpolated PM 2.5 at\n",
+    "their location. We will use simple statics of root mean square error, mean absolute error, and\n",
     "Pearson correlation to test which kriging process under differing configurations.\n",
     "\n",
     "\\\n",
     "\n",
     " The kriging configuration will include:\n",
     "\n",
-    " - Ordinary kriging. \n",
+    " - Ordinary kriging.\n",
     "\n",
     " - Universal kriging with external drift.\n",
     "\n",
-    "   - external Z drift is a unique feature where you can provide grided data in 2D, where the z-value (for example, the DEM data) is interpolated to your target points \n",
+    "   - external Z drift is a unique feature where you can provide grided data in 2D, where the z-value (for example, the DEM data) is interpolated to your target points\n",
     "\n",
     " - Universal kriging with specified drift.\n",
     "\n",
     "   - specified drift is the classical form of external drift kriging, where a linear correlated second variable needs to be given at all conditioning points AND at the target points for kriging (this could also be used for DEM data, but you have to provide the data at the exact points, where you want to krige the temperature)\n",
     "\\\n",
-    "For UK with external and specified drift, four different covariates are tested. \n",
+    "For UK with external and specified drift, four different covariates are tested.\n",
     "The covariates are:\n",
-    "  \n",
-    " - elevation (take from a [digital elevation model](http://research.jisao.washington.edu/data_sets/elevation/) \n",
     "\n",
-    " - aerosol optical depth (derived from the [modis aqua/terra satellites](https://www.nsstc.uah.edu/data/sundar/MODIS_AOD_L3_HRG/)  \n",
+    " - elevation (take from a [digital elevation model](http://research.jisao.washington.edu/data_sets/elevation/)\n",
     "\n",
-    " - wind direction (as modeled by [ERA5](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview>) \n",
+    " - aerosol optical depth (derived from the [modis aqua/terra satellites](https://www.nsstc.uah.edu/data/sundar/MODIS_AOD_L3_HRG/)\n",
+    "\n",
+    " - wind direction (as modeled by [ERA5](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview>)\n",
     "\n",
     "\\\n",
     "For each kriging configuration, we test three different percentages of the number of air quality stations removed. The three different percentages were 10%, 30%, and 50%. For each percentage, we also did ten iterations of random removal of air quality stations. These iterations were done to try and make the removal process fairer, but we acknowledge this method could be improved with a better means of random sampling and more iterations.\n",
@@ -53,13 +55,12 @@
     "   - [OK-build.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/OK-build.py)\n",
     "   - [UK-aod-build.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/UK-aod-build.py)\n",
     "   - [UK-dem-build.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/UK-dem-build.py)\n",
-    "   - [UK-era-build.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/UK-era-build.py)\n",
-    "\n"
+    "   - [UK-era-build.py](https://github.com/cerodell/krige-smoke/blob/main/scripts/UK-era-build.py)"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "d34d3acf",
+   "id": "2d9d6543",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -70,7 +71,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "77c06ebd",
+   "id": "1871f26e",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -86,7 +87,7 @@
   },
   {
    "cell_type": "markdown",
-   "id": "48465fd2",
+   "id": "6575785b",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -97,7 +98,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "9b04c8fa",
+   "id": "5f7c2b78",
    "metadata": {
     "lines_to_next_cell": 2
    },
@@ -105,15 +106,16 @@
    "source": [
     "pathlistUK = sorted(Path(str(data_dir)).glob(f\"UK-*\"))\n",
     "pathlistOK = sorted(Path(str(data_dir)).glob(f\"OK-*\"))\n",
+    "pathlistRK = sorted(Path(str(data_dir)).glob(f\"RK-*\"))\n",
     "\n",
-    "pathlist = pathlistOK + pathlistUK\n",
+    "pathlist = pathlistOK + pathlistUK + pathlistRK\n",
     "\n",
     "# print(pathlist)"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "d53381da",
+   "id": "d27f401d",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -124,17 +126,18 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "72f65fa9",
-   "metadata": {},
+   "id": "14e5118a",
+   "metadata": {
+    "lines_to_next_cell": 2
+   },
    "outputs": [],
    "source": [
-    "df_final = pd.concat([buildsats(path) for path in pathlist]).reset_index()\n",
-    "\n"
+    "df_final = pd.concat([buildsats(path) for path in pathlist]).reset_index()"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "3071ab64",
+   "id": "7fe57a4e",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -145,28 +148,28 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "4218f7dc",
+   "id": "2827adec",
    "metadata": {
     "lines_to_next_cell": 0
    },
    "outputs": [],
    "source": [
-    "plotsns(\"mae\", cmap=\"coolwarm\", df_final= df_final)"
+    "plotsns(\"mae\", cmap=\"coolwarm\", df_final=df_final)"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "c0605a5f",
+   "id": "27e54e31",
    "metadata": {
     "lines_to_next_cell": 0
    },
    "source": [
-    "Based on  Mean Absolute  Error, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors. "
+    "Based on  Mean Absolute  Error, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors."
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "dd7afd39",
+   "id": "2f76d49f",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -177,26 +180,26 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "9d096909",
+   "id": "9a136052",
    "metadata": {},
    "outputs": [],
    "source": [
-    "plotsns(\"rmse\", cmap=\"coolwarm\", df_final= df_final)"
+    "plotsns(\"rmse\", cmap=\"coolwarm\", df_final=df_final)"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "9bfd3152",
+   "id": "50d453ba",
    "metadata": {
     "lines_to_next_cell": 0
    },
    "source": [
-    "Based on Root Mean Square Error, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors. "
+    "Based on Root Mean Square Error, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors."
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "7c7701ab",
+   "id": "00151d24",
    "metadata": {
     "lines_to_next_cell": 0
    },
@@ -207,23 +210,33 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "e076f256",
+   "id": "83f3fb6e",
    "metadata": {},
    "outputs": [],
    "source": [
-    "plotsns(\"pr\", cmap=\"coolwarm_r\", df_final= df_final)"
+    "plotsns(\"pr\", cmap=\"coolwarm_r\", df_final=df_final)"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "d7f9f656",
+   "id": "58e6d9f1",
    "metadata": {
     "lines_to_next_cell": 2
    },
    "source": [
-    "Based on Pearsons Corelation, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors. \n",
+    "Based on Pearson's Correlation, Ordinary Kriging is the most accurate for each percentage of randomly removed aq monitors."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "aad71178",
+   "metadata": {},
+   "source": [
+    "## Conclusion\n",
+    "Looking at our case study's basic statistics, OK outperforms the other kriging methods. However, I feel that more time and testing RK would be a better method. The literature supports RK over OK as long as an adequate trend model is fitted. Also, RK was not projected to a lambert conformal projection like in our OK and UK configuration; this is likely contributed to the poor performance of RK. Another thought is testing different ways to transform the data before kriging. Methods like normalizing, square root, cubic root, or natural logarithm transformation could be explored. \n",
     "\n",
-    "\n"
+    "\n",
+    "Finally, looking at different covariates and how one could bring in a wildfire location and alter the kriged weight to be the height in those locations could be interesting. One approach could be to use the BlueSky smoke forecast as a covariate. And perhaps combine it with other covariates like DEM AOD etc. "
    ]
   }
  ],
