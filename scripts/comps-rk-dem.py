@@ -12,7 +12,7 @@
 # <div class="alert alert-info">
 # Note
 #
-# The definition above come from a [geospatial data science course](https://zia207.github.io/geospatial-r-github.io/index.html) created by [Prof. Zia Ahmed](https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html) at The State of New York University at Buffalo.
+# The definition above came from a [geospatial data science course](https://zia207.github.io/geospatial-r-github.io/index.html) created by [Prof. Zia Ahmed](https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html) at The State of New York University at Buffalo.
 #
 # - Thanks Prof. Zia Ahmed for the great resource!
 # </div>
