@@ -10,7 +10,15 @@
 # - Where the $f_{k}$ are some global functions of position  $\vec{x}$  and the  $\beta_{k}$ are the coefficients.
 #
 # - The $f$ are called base functions. The  $\varepsilon(\vec{x})$  is the spatially-correlated error, which is modelled as before, with a variogram, but now only considering the residuals, after the global trend is removed.
-
+#
+#
+# <div class="alert alert-info">
+# Note
+#
+# The definition above come from a [geospatial data science course](https://zia207.github.io/geospatial-r-github.io/index.html) created by [Prof. Zia Ahmed](https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html) at The State of New York University at Buffalo.
+#
+# - Thanks Prof. Zia Ahmed for the great resource!
+# </div>
 # %% [markdown]
 # Load python modules
 # %%
@@ -80,7 +88,7 @@ krig_ds
 
 # %% [markdown]
 # ### Covariate
-# We will use the Bluesky Canada Smoke Forecast (BSC) as a covariate for universal kriging with specified drift. The data is from the [firesmoke.ca](https://firesmoke.ca)
+# We will use the Bluesky Canada Smoke Forecast (BlueSky) as a covariate for universal kriging with specified drift. The data comes from [firesmoke.ca](https://firesmoke.ca)
 #
 # %%
 
@@ -89,9 +97,9 @@ ds = salem.open_xr_dataset(str(data_dir) + f"/dispersion1.nc")
 
 # %% [markdown]
 # ## Set up specified drift
-# For specified we need satellite derived BSC PM2.5 at every aq monitor location and BSC PM2.5 on the same grid we are interpolating.
+# For specified we need the modeled derived PM2.5 concentration from BlueSky at every aq monitor location and BleuSky modeled PM2.5 concentration on the same grid we are interpolating.
 # %% [markdown]
-# ### BSC PM2.5 at AQs location
+# ### BlueSky modeled PM2.5 concentration at AQs location
 # %%
 
 y = xr.DataArray(
@@ -113,14 +121,14 @@ else:
 
 
 # %% [markdown]
-# ### BSC PM2.5 Data on grid
-# Now we will transform the BSC PM2.5 data to be on the grid we are interpolating too. This is feed in as a specified drift array when executing the interpolation.
+# ### BlueSky PM2.5 Data on grid
+# Now we will transform the BlueSky PM2.5 data to be on the grid we are interpolating too. This is feed in as a specified drift array when executing the interpolation.
 # %%
 ds_T = krig_ds.salem.transform(ds)
 var_array = ds_T["pm25"].values
 
 # %% [markdown]
-# #### Plot BSC PM2.5
+# #### Plot BlueSky PM2.5
 
 # %%
 ax = plt.axes(projection=ccrs.Orthographic(-80, 35))
@@ -150,7 +158,7 @@ krig = UniversalKriging(
     drift_terms=["specified"],
     variogram_model=variogram_model,
     nlags=nlags,
-    specified_drift=[var_points],  ## BSC PM2.5 at aq monitors
+    specified_drift=[var_points],  ## BlueSky PM2.5 at aq monitors
 )
 print(f"UK build time {datetime.now() - startTime}")
 
@@ -167,7 +175,7 @@ plotvariogram(krig)
 
 # %% [markdown]
 # ### Execute UK
-# Interpolate data to our grid using UK with specified drift. Where the specified drift is the linear correlation of BSC PM2.5 to PM2.5 at all locations and on the interploated grid for kriging.
+# Interpolate data to our grid using UK with specified drift. Where the specified drift is the linear correlation of BlueSky PM2.5 to PM2.5 at all locations and on the interploated grid for kriging.
 # %%
 var_array[var_array > np.max(var_points)] = np.max(var_points) + 20
 

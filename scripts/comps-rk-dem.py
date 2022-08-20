@@ -1,13 +1,21 @@
 # %% [markdown]
 # # Regression Kriging (RK)
 # Regression kriging (RK) mathematically equivalent to the regression kriging or kriging with external drift, where auxiliary predictors are used directly to solve the kriging weights. Regression kriging combines a regression model with simple kriging of the regression residuals. The experimental variogram of residuals is first computed and modeled, and then simple kriging (SK) is applied to the residuals to give the spatial prediction of the residuals.
-
+#
 # $$
 # \begin{array}{l}Z_{R K}^{*}(u)=m_{R K}^{*}(u)+\sum_{\alpha=1}^{n(u)} \lambda_{\alpha}^{R K}(u) R\left(u_{\alpha}\right)\end{array}
 # $$
-
+#
 # - Where $m^{*} R K(u \alpha)$ is the regression estimate for location $u$ and $R(u \alpha)$ are the residuals $[R(u \alpha)-m(u \alpha)]$ of the observed locations, $n(u)$.
-
+#
+#
+# <div class="alert alert-info">
+# Note
+#
+# The definition above come from a [geospatial data science course](https://zia207.github.io/geospatial-r-github.io/index.html) created by [Prof. Zia Ahmed](https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html) at The State of New York University at Buffalo.
+#
+# - Thanks Prof. Zia Ahmed for the great resource!
+# </div>
 
 # %% [markdown]
 # Load python modules

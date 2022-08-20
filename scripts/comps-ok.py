@@ -7,7 +7,14 @@
 # - Where is $\lambda_{\alpha}^{O K}(u)$  weight assigned to the known variables at location  $\left(u_{a}\right)$ and $n(u)$ is the number of measured values used in estimation of the neighborhood of $u$.
 #
 # - An assumption of ordinary kriging is data stationarity. That is, the mean of the interpolated variable is constant within the search window, which is often not true. This makes OK less suitable for interpolation over large domains and often requires data transformation.
-
+#
+# <div class="alert alert-info">
+# Note
+#
+# The definition above come from a [geospatial data science course](https://zia207.github.io/geospatial-r-github.io/index.html) created by [Prof. Zia Ahmed](https://www.buffalo.edu/renew/about-us/leadership/zia-ahmed.html) at The State of New York University at Buffalo.
+#
+# - Thanks Prof. Zia Ahmed for the great resource!
+# </div>
 # %% [markdown]
 # Load python modules
 # %%

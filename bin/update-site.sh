@@ -1,8 +1,8 @@
-# jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-data.py
-# mv /Users/rodell/krige-smoke/scripts/comps-data.ipynb /Users/rodell/krige-smoke/docs/source/
+jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-data.py
+mv /Users/rodell/krige-smoke/scripts/comps-data.ipynb /Users/rodell/krige-smoke/docs/source/
 
-# jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-ok.py
-# mv /Users/rodell/krige-smoke/scripts/comps-ok.ipynb /Users/rodell/krige-smoke/docs/source/
+jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-ok.py
+mv /Users/rodell/krige-smoke/scripts/comps-ok.ipynb /Users/rodell/krige-smoke/docs/source/
 
 
 jupytext --to notebook /Users/rodell/krige-smoke/scripts/comps-uk-bsp.py
